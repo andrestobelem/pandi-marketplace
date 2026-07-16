@@ -17,9 +17,9 @@ Todos los comandos: `node src/cli.ts <comando> [args...]` (o con
 `${CLAUDE_PLUGIN_ROOT}` en vez de `src` cuando lo invoca el skill). Ver
 `skills/pandi-launchpad/SKILL.md` para la lista completa de comandos y su formato
 JSON de entrada/salida: `set`, `show`, `clear`, `pulse-all`, `progress-bar`, `sweep`,
-`blink-all`, `rainbow-sweep`, `scroll-text`, `icon`, `ask`, `confirm`, `wait-for-press`,
-más `notify <kind>` y `notify-text <mensaje> [kind]` (usados por los hooks), y
-`safety-gate` (usado por el hook `PreToolUse`, no se invoca a mano).
+`blink-all`, `rainbow-sweep`, `scroll-text`, `icon`, `ask`, `ask-multi`, `confirm`,
+`wait-for-press`, más `notify <kind>` y `notify-text <mensaje> [kind]` (usados por los
+hooks), y `safety-gate` (usado por el hook `PreToolUse`, no se invoca a mano).
 
 ## Notificaciones automáticas (hooks)
 

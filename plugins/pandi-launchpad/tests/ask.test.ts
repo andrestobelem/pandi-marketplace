@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { confirmOptions, countdownColor, optionCells } from "../src/ask.ts";
+import { confirmOptions, countdownColor, DEFAULT_DONE_OPTION, multiSelectCells, optionCells } from "../src/ask.ts";
 
 describe("optionCells", () => {
   it("builds one cell per pad in each option's block, keyed by pad note", () => {
@@ -49,6 +49,63 @@ describe("confirmOptions", () => {
       { label: "dale", col: 1, row: 1, color: "green" },
       { label: "paso", col: 6, row: 1, color: "red" },
     ]);
+  });
+});
+
+describe("multiSelectCells", () => {
+  const options = [
+    { label: "a", col: 1, row: 1, color: "green" },
+    { label: "b", col: 6, row: 1, color: "red" },
+  ];
+
+  it("lights unselected options in static mode", () => {
+    const { cells } = multiSelectCells(options, new Set());
+    const optionCellsOnly = cells.filter((c) => c.color === "green" || c.color === "red");
+    expect(optionCellsOnly.length).toBeGreaterThan(0);
+    expect(optionCellsOnly.every((c) => c.mode === "static")).toBe(true);
+  });
+
+  it("lights selected options in pulse mode, leaving others static", () => {
+    const { cells } = multiSelectCells(options, new Set(["a"]));
+    const aCells = cells.filter((c) => c.color === "green");
+    const bCells = cells.filter((c) => c.color === "red");
+    expect(aCells.every((c) => c.mode === "pulse")).toBe(true);
+    expect(bCells.every((c) => c.mode === "static")).toBe(true);
+  });
+
+  it("maps each option's pads to its label in byNote, same as optionCells", () => {
+    const { byNote } = multiSelectCells(options, new Set());
+    expect(byNote.get(11)).toBe("a");
+    expect(byNote.get(16)).toBe("b");
+  });
+
+  it("adds a fixed 'done' block outside row 8 (reserved for the countdown bar) and rows 1-2 (typical options)", () => {
+    const { doneNotes } = multiSelectCells(options, new Set());
+    expect(doneNotes.size).toBeGreaterThan(0);
+    for (const note of doneNotes) {
+      const row = Math.floor(note / 10);
+      expect(row).not.toBe(8);
+      expect(row).not.toBe(1);
+      expect(row).not.toBe(2);
+    }
+  });
+
+  it("uses DEFAULT_DONE_OPTION's block when no override is given", () => {
+    const { doneNotes } = multiSelectCells(options, new Set());
+    const expected = new Set<number>();
+    const span = DEFAULT_DONE_OPTION.colSpan ?? 1;
+    const rowSpan = DEFAULT_DONE_OPTION.rowSpan ?? 1;
+    for (let c = DEFAULT_DONE_OPTION.col; c < DEFAULT_DONE_OPTION.col + span; c++) {
+      for (let r = DEFAULT_DONE_OPTION.row; r < DEFAULT_DONE_OPTION.row + rowSpan; r++) {
+        expected.add(r * 10 + c);
+      }
+    }
+    expect(doneNotes).toEqual(expected);
+  });
+
+  it("respects a custom done option position", () => {
+    const { doneNotes } = multiSelectCells(options, new Set(), { col: 3, row: 5, colSpan: 1, rowSpan: 1 });
+    expect(doneNotes).toEqual(new Set([53]));
   });
 });
 

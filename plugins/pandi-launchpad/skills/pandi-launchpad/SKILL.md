@@ -60,6 +60,15 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
   sí/no: siempre verde (bloque abajo-izquierda) para `yesLabel` y rojo (bloque
   abajo-derecha) para `noLabel`, sin tener que armar el JSON de `ask` a mano. Mismo
   formato de respuesta que `ask`.
+- `ask-multi <timeoutSeconds> '<jsonOptions>' ['<jsonDoneOption>']` — como `ask`,
+  pero cada press hace toggle de esa opción (se prende en modo `pulse` cuando está
+  seleccionada, `static` cuando no) en vez de resolver al toque. Hay un bloque fijo
+  de "listo" (blanco, `flash`, 2x2 en col=7,row=6 por defecto — arriba a la derecha,
+  fuera de la fila 8 y de las filas 1-2 típicas de las opciones) que confirma la
+  selección actual; `jsonDoneOption` opcional la reposiciona:
+  `{"col":1-8,"row":1-8,"color"?:str,"colSpan"?:n,"rowSpan"?:n}`. Devuelve
+  `{"labels":[...]}` (o con `"timed_out":true` si vence el timeout con lo
+  seleccionado hasta ese momento).
 
 **Importante:** como el dispositivo no tiene pantalla, decí el prompt/opciones en tu
 propia respuesta de texto (antes de correr el comando) para que la persona sepa qué

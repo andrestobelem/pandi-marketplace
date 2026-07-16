@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { confirmOptions, countdownColor, type Option, optionCells } from "./ask.ts";
+import { confirmOptions, countdownColor, type DoneOption, multiSelectCells, type Option, optionCells } from "./ask.ts";
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
 import { iconCells } from "./icons.ts";
@@ -15,7 +15,7 @@ function unwrap(value: string | undefined): string | undefined {
   return value;
 }
 
-const INPUT_COMMANDS = new Set(["ask", "confirm", "wait-for-press"]);
+const INPUT_COMMANDS = new Set(["ask", "ask-multi", "confirm", "wait-for-press"]);
 
 const COUNTDOWN_TICK_MS = 1000;
 
@@ -41,6 +41,49 @@ async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds
   }
   if (pressedNote === null) return { label: null, timed_out: true };
   return { label: byNote.get(pressedNote) ?? null };
+}
+
+/** Like runAsk, but each press toggles that option's selection (redrawn as
+ * pulse vs static) instead of resolving immediately; only the "done" block
+ * (or a timeout) ends the loop. Returns the labels selected at that point. */
+async function runAskMulti(
+  lp: LaunchpadX,
+  options: readonly Option[],
+  timeoutSeconds: number,
+  doneOption?: DoneOption,
+): Promise<unknown> {
+  const selected = new Set<string>();
+  const { byNote, doneNotes } = multiSelectCells(options, selected, doneOption);
+  const wantedNotes = new Set([...byNote.keys(), ...doneNotes]);
+  const totalMs = timeoutSeconds * 1000;
+  const redraw = () => lp.show(multiSelectCells(options, selected, doneOption).cells);
+  lp.clear();
+  redraw();
+  let confirmed = false;
+  try {
+    let elapsedMs = 0;
+    while (elapsedMs < totalMs && !confirmed) {
+      const remainingMs = totalMs - elapsedMs;
+      lp.show(timerBarCells(remainingMs / totalMs, countdownColor(remainingMs)));
+      const waitMs = Math.min(COUNTDOWN_TICK_MS, remainingMs);
+      const note = await lp.pollPress(waitMs, wantedNotes);
+      elapsedMs += waitMs;
+      if (note === null) continue;
+      if (doneNotes.has(note)) {
+        confirmed = true;
+        continue;
+      }
+      const label = byNote.get(note);
+      if (!label) continue;
+      if (selected.has(label)) selected.delete(label);
+      else selected.add(label);
+      redraw();
+    }
+  } finally {
+    lp.show(fullGridCells("off"));
+    lp.show(timerBarCells(0));
+  }
+  return confirmed ? { labels: [...selected] } : { labels: [...selected], timed_out: true };
 }
 
 type PermissionDecision = "allow" | "deny" | "ask";
@@ -191,6 +234,12 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
       const [timeoutSeconds, optionsJson] = args;
       const options = JSON.parse(optionsJson!) as Option[];
       return runAsk(lp, options, Number(timeoutSeconds));
+    }
+    case "ask-multi": {
+      const [timeoutSeconds, optionsJson, doneOptionJson] = args;
+      const options = JSON.parse(optionsJson!) as Option[];
+      const doneOption = doneOptionJson ? (JSON.parse(doneOptionJson) as DoneOption) : undefined;
+      return runAskMulti(lp, options, Number(timeoutSeconds), doneOption);
     }
     case "confirm": {
       const [yesLabel, noLabel, timeoutSeconds] = args;
