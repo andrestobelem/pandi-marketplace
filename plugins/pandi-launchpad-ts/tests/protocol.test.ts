@@ -14,6 +14,7 @@ import {
   rainbowCells,
   rectCells,
   RGB,
+  textFrameCells,
 } from "../src/protocol.ts";
 
 describe("padNote", () => {
@@ -197,6 +198,39 @@ describe("rectCells", () => {
   it("clamps the block to the 8x8 board", () => {
     const cells = rectCells(8, 8, 2, 2);
     expect(cells).toEqual([{ col: 8, row: 8 }]);
+  });
+});
+
+describe("textFrameCells", () => {
+  const onBottomRowOnly: boolean[][] = [[true, false, false, false, false, false, false]];
+
+  it("always returns the full 64-pad grid", () => {
+    expect(textFrameCells(onBottomRowOnly, 0, "red")).toHaveLength(64);
+  });
+
+  it("row 8 is always off, regardless of the glyph data", () => {
+    const allOn: boolean[][] = [[true, true, true, true, true, true, true]];
+    const cells = textFrameCells(allOn, 0, "red");
+    expect(cells.filter((c) => c.row === 8).every((c) => c.color === "off")).toBe(true);
+  });
+
+  it("maps a column's bits onto rows 1-7 of the matching device column, at offset 0", () => {
+    const cells = textFrameCells(onBottomRowOnly, 0, "red");
+    const byCoord = new Map(cells.map((c) => [`${c.col},${c.row}`, c.color]));
+    expect(byCoord.get("1,1")).toBe("red");
+    for (let row = 2; row <= 8; row++) {
+      expect(byCoord.get(`1,${row}`)).toBe("off");
+    }
+    for (let col = 2; col <= 8; col++) {
+      expect(byCoord.get(`${col},1`)).toBe("off");
+    }
+  });
+
+  it("shifts the pattern by offset, leaving out-of-range device columns blank", () => {
+    const cells = textFrameCells(onBottomRowOnly, -1, "red");
+    const byCoord = new Map(cells.map((c) => [`${c.col},${c.row}`, c.color]));
+    expect(byCoord.get("1,1")).toBe("off");
+    expect(byCoord.get("2,1")).toBe("red");
   });
 });
 

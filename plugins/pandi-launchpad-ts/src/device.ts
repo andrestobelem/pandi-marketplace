@@ -1,4 +1,5 @@
 import midi from "@julusian/midi";
+import { textColumns } from "./font.ts";
 import {
   type Cell,
   type ColourSpec,
@@ -10,6 +11,7 @@ import {
   RAINBOW_PALETTE,
   rainbowCells,
   SYSEX_HEADER,
+  textFrameCells,
 } from "./protocol.ts";
 
 const MAX_SPECS_PER_MESSAGE = 81;
@@ -103,6 +105,16 @@ export class LaunchpadX {
         await sleep(speedMs);
       }
     }
+  }
+
+  async scrollText(text: string, color: string = "white", speedMs: number = 120): Promise<void> {
+    parseColor(color); // fail before animating rather than partway through it
+    const columns = textColumns(text);
+    for (let offset = -8; offset <= columns.length; offset++) {
+      this.show(textFrameCells(columns, offset, color));
+      await sleep(speedMs);
+    }
+    this.show(fullGridCells("off"));
   }
 
   pollPress(timeoutMs: number, wantedNotes?: ReadonlySet<number>): Promise<number | null> {

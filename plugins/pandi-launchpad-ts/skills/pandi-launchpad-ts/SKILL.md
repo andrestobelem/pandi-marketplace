@@ -28,6 +28,9 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
 - `sweep [color] [cycles]` — anima una columna barriendo el grid. Bloquea mientras dura.
 - `blink-all [color] [times]` — parpadea todo el grid on/off. Bloquea mientras dura.
 - `rainbow-sweep [cycles]` — anima una paleta arcoíris rotando. Bloquea mientras dura.
+- `scroll-text <texto> [color] [speedMs]` — hace scrollear `<texto>` de derecha a
+  izquierda en fuente 5x7 (soporta A-Z, 0-9, espacio, `. ! ?`; no distingue
+  mayúsculas/minúsculas). Bloquea mientras dura (`speedMs` por columna, default 120).
 
 ## Comandos que bloquean esperando un press físico
 
