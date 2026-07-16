@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --project \"${CLAUDE_PLUGIN_ROOT}\" python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/notify.py\" done",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/cli.ts\" notify done || true",
             "timeout": 15
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --project \"${CLAUDE_PLUGIN_ROOT}\" python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/notify.py\" attention",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/cli.ts\" notify attention || true",
             "timeout": 15
           }
         ]

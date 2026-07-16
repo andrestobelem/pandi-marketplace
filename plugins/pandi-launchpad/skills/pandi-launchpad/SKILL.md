@@ -1,5 +1,5 @@
 ---
-name: pandi-launchpad-ts
+name: pandi-launchpad
 description: Use a physical Novation Launchpad X as a lights + buttons channel to notify the user or ask them a yes/no-style question, by running a Node CLI (no MCP server involved). Invoke when you want to light pads to signal progress/completion, or need the user to answer by pressing a physical pad instead of typing.
 allowed-tools: Bash
 ---
@@ -57,5 +57,4 @@ tiene N segundos para apretar.
 Un Launchpad X conectado por USB antes de invocar cualquier comando. Si no detecta el
 puerto automáticamente, fijá el nombre exacto en `LAUNCHPAD_OUTPUT_PORT` /
 `LAUNCHPAD_INPUT_PORT` (env vars). Necesita `node_modules` instalado una vez
-(`npm install` en la carpeta del plugin) — a diferencia del server MCP en Python, esto
-no se resuelve solo.
+(`npm install` en la carpeta del plugin).

@@ -1,7 +1,7 @@
 {
-  "name": "pandi-launchpad-ts",
+  "name": "pandi-launchpad",
   "version": "0.2.0",
-  "description": "TypeScript, MCP-less bridge between a Novation Launchpad X and Claude Code, exposed as a skill instead of an MCP tool.",
+  "description": "Bridge between a Novation Launchpad X and Claude Code, exposed as a skill that shells out to a Node CLI.",
   "type": "module",
   "private": true,
   "scripts": {
