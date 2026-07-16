@@ -2,8 +2,13 @@
 import { confirmOptions, countdownColor, type Option, optionCells } from "./ask.ts";
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
+import { iconCells } from "./icons.ts";
 import { type Cell, type Mode, fullGridCells, noteToCoord, padNote, progressBarCells, timerBarCells } from "./protocol.ts";
 import { riskyCommandReason } from "./risky-command.ts";
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function unwrap(value: string | undefined): string | undefined {
   if (!value || (value.startsWith("${") && value.endsWith("}"))) return undefined;
@@ -147,6 +152,13 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
       const [color, times] = args;
       await lp.blink(color ?? "yellow", times ? Number(times) : 3);
       return { result: `blinked ${color ?? "yellow"} x${times ?? 3}` };
+    }
+    case "icon": {
+      const [name, color, durationMs] = args;
+      lp.show(iconCells(name!, color ?? "white"));
+      await sleep(durationMs ? Number(durationMs) : 1500);
+      lp.show(fullGridCells("off"));
+      return { result: `showed icon ${JSON.stringify(name)} (${color ?? "white"})` };
     }
     case "notify": {
       const [kind] = args;

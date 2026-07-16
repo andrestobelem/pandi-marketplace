@@ -39,6 +39,10 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
   `kind` (`done`=verde, `attention`=rojo, cualquier otro=blanco), igual que `notify`.
   Es lo que usan los hooks `Stop`/`Notification` para mostrar un mensaje en vez de
   solo prender el grid.
+- `icon <nombre> [color=white] [durationMs=1500]` — prende un patrón fijo 8x8
+  (`check`, `x`, `hourglass`, `arrow-up`, `arrow-down`, ver `src/icons.ts`) por
+  `durationMs` y limpia el grid. Más rápido de leer que `scroll-text` para eventos
+  frecuentes (éxito, error, esperando).
 
 ## Comandos que bloquean esperando un press físico
 
