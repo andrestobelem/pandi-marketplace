@@ -18,13 +18,13 @@ Todos los comandos: `node src/cli.ts <comando> [args...]` (o con
 `skills/pandi-launchpad/SKILL.md` para la lista completa de comandos y su formato
 JSON de entrada/salida: `set`, `show`, `clear`, `pulse-all`, `progress-bar`, `sweep`,
 `blink-all`, `rainbow-sweep`, `scroll-text`, `ask`, `confirm`, `wait-for-press`, más
-`notify <kind>` (usado por los hooks).
+`notify <kind>` y `notify-text <mensaje> [kind]` (usados por los hooks).
 
 ## Notificaciones automáticas (hooks)
 
-`Stop` → grid verde fijo, `Notification` → grid rojo pulsante. Cada hook llama a
-`node cli.ts notify <kind> || true`, así que un Launchpad desconectado nunca bloquea
-el evento real.
+`Stop` → texto "Listo" scrolleando en verde, `Notification` → "Atencion" scrolleando
+en rojo. Cada hook llama a `node cli.ts notify-text <mensaje> <kind> || true`, así que
+un Launchpad desconectado nunca bloquea el evento real.
 
 ## Detección de puerto
 

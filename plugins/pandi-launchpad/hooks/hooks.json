@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/cli.ts\" notify done || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/cli.ts\" notify-text Listo done || true",
             "timeout": 15
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/cli.ts\" notify attention || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/cli.ts\" notify-text Atencion attention || true",
             "timeout": 15
           }
         ]

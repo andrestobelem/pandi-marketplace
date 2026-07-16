@@ -31,6 +31,10 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
 - `scroll-text <texto> [color] [speedMs]` — hace scrollear `<texto>` de derecha a
   izquierda en fuente 5x7 (soporta A-Z, 0-9, espacio, `. ! ?`; no distingue
   mayúsculas/minúsculas). Bloquea mientras dura (`speedMs` por columna, default 120).
+- `notify-text <mensaje> [kind=done]` — como `scroll-text`, pero el color sale de
+  `kind` (`done`=verde, `attention`=rojo, cualquier otro=blanco), igual que `notify`.
+  Es lo que usan los hooks `Stop`/`Notification` para mostrar un mensaje en vez de
+  solo prender el grid.
 
 ## Comandos que bloquean esperando un press físico
 
