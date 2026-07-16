@@ -42,6 +42,10 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
 - `wait-for-press <timeoutSeconds> ['<jsonPads>']` — bloquea hasta que se aprieta
   cualquier pad (o uno de `jsonPads`, un array de `{"col","row"}`). Devuelve
   `{"col":n,"row":n}` o `{"timed_out":true}`.
+- `confirm [yesLabel="si"] [noLabel="no"] [timeoutSeconds=30]` — atajo para preguntas
+  sí/no: siempre verde (bloque abajo-izquierda) para `yesLabel` y rojo (bloque
+  abajo-derecha) para `noLabel`, sin tener que armar el JSON de `ask` a mano. Mismo
+  formato de respuesta que `ask`.
 
 **Importante:** como el dispositivo no tiene pantalla, decí el prompt/opciones en tu
 propia respuesta de texto (antes de correr el comando) para que la persona sepa qué

@@ -1,16 +1,29 @@
 #!/usr/bin/env node
+import { confirmOptions, type Option, optionCells } from "./ask.ts";
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
-import { type Cell, type Mode, fullGridCells, noteToCoord, padNote, progressBarCells, rectCells } from "./protocol.ts";
+import { type Cell, type Mode, fullGridCells, noteToCoord, padNote, progressBarCells } from "./protocol.ts";
 
 function unwrap(value: string | undefined): string | undefined {
   if (!value || (value.startsWith("${") && value.endsWith("}"))) return undefined;
   return value;
 }
 
-type Option = { label: string; col: number; row: number; color: string; colSpan?: number; rowSpan?: number };
+const INPUT_COMMANDS = new Set(["ask", "confirm", "wait-for-press"]);
 
-const INPUT_COMMANDS = new Set(["ask", "wait-for-press"]);
+async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds: number): Promise<unknown> {
+  const { cells, byNote } = optionCells(options);
+  lp.clear();
+  lp.show(cells);
+  let pressedNote: number | null;
+  try {
+    pressedNote = await lp.pollPress(timeoutSeconds * 1000, new Set(byNote.keys()));
+  } finally {
+    lp.show(cells.map((c) => ({ ...c, color: "off" })));
+  }
+  if (pressedNote === null) return { label: null, timed_out: true };
+  return { label: byNote.get(pressedNote) ?? null };
+}
 
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
@@ -84,24 +97,11 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
     case "ask": {
       const [timeoutSeconds, optionsJson] = args;
       const options = JSON.parse(optionsJson!) as Option[];
-      const byNote = new Map<number, string>();
-      const cells: Cell[] = [];
-      for (const opt of options) {
-        for (const { col, row } of rectCells(opt.col, opt.row, opt.colSpan ?? 2, opt.rowSpan ?? 2)) {
-          byNote.set(padNote(col, row), opt.label);
-          cells.push({ col, row, color: opt.color, mode: "static" });
-        }
-      }
-      lp.clear();
-      lp.show(cells);
-      let pressedNote: number | null;
-      try {
-        pressedNote = await lp.pollPress(Number(timeoutSeconds) * 1000, new Set(byNote.keys()));
-      } finally {
-        lp.show(cells.map((c) => ({ ...c, color: "off" })));
-      }
-      if (pressedNote === null) return { label: null, timed_out: true };
-      return { label: byNote.get(pressedNote) ?? null };
+      return runAsk(lp, options, Number(timeoutSeconds));
+    }
+    case "confirm": {
+      const [yesLabel, noLabel, timeoutSeconds] = args;
+      return runAsk(lp, confirmOptions(yesLabel, noLabel), timeoutSeconds ? Number(timeoutSeconds) : 30);
     }
     case "wait-for-press": {
       const [timeoutSeconds, padsJson] = args;
