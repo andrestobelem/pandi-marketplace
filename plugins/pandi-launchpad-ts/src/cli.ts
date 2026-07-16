@@ -92,6 +92,7 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
           cells.push({ col, row, color: opt.color, mode: "static" });
         }
       }
+      lp.clear();
       lp.show(cells);
       let pressedNote: number | null;
       try {
