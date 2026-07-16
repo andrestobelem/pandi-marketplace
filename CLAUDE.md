@@ -7,6 +7,11 @@
 - Never add `Co-Authored-By:` or any other AI attribution — not in commit messages,
   commit descriptions, PR titles/bodies, branch names, or anywhere else in this repo.
 
+## Development
+
+- Feature work follows TDD (`/tdd`): write the test first, watch it fail, then
+  implement.
+
 ## Agent skills
 
 ### Issue tracker
