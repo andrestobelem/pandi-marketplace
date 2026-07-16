@@ -12,9 +12,10 @@ pad.
 El MCP server en Python solo refresca su lista de tools al arrancar la sesión de
 Claude Code — `/reload-plugins` no alcanza, hace falta reiniciar la sesión entera cada
 vez que se agrega una tool nueva. Un skill, en cambio, es descubierto por el listado de
-skills disponibles y no tiene ese problema. Este plugin es un experimento en paralelo
-para comparar los dos enfoques; puede reemplazar a `pandi-launchpad` más adelante si
-resulta mejor.
+skills disponibles y no tiene ese problema. La comparación ya se resolvió: esta versión
+tiene paridad completa con la de Python más funcionalidad que esa nunca tuvo (texto
+scrolleando, atajo `confirm`), y es la que se usa día a día. `pandi-launchpad` (Python)
+queda deshabilitado pero no se borró.
 
 ## Requisitos
 
@@ -30,7 +31,9 @@ Todos los comandos: `node src/cli.ts <comando> [args...]` (o con
 `skills/pandi-launchpad-ts/SKILL.md` para la lista completa de comandos y su formato
 JSON de entrada/salida — están los mismos que en `pandi-launchpad`: `set`, `show`,
 `clear`, `pulse-all`, `progress-bar`, `sweep`, `blink-all`, `rainbow-sweep`, `ask`,
-`wait-for-press`, más `notify <kind>` (usado por los hooks).
+`wait-for-press`, más `notify <kind>` (usado por los hooks); y dos que no tiene la
+versión Python: `scroll-text <texto> [color] [speedMs]` (texto en fuente 5x7) y
+`confirm [yesLabel] [noLabel] [timeoutSeconds]` (atajo de `ask` para sí/no).
 
 ## Notificaciones automáticas (hooks)
 
@@ -47,9 +50,11 @@ o similar) en `LAUNCHPAD_OUTPUT_PORT` / `LAUNCHPAD_INPUT_PORT`.
 ## Nota de implementación
 
 El protocolo (mapeo de pads, colores, mensajes SysEx) es una portación 1:1 del módulo
-Python, con tests unitarios en `tests/` (vitest) que espejan `test_device.py`. Se
-verificó en vivo contra un Launchpad X real: pad individual, las 8 animaciones/
-patterns, `ask` con opciones en bloques 2x2, `wait-for-press`, y los dos hooks.
+Python, con tests unitarios en `tests/` (vitest) que espejan `test_device.py`. La
+fuente de texto (`src/font.ts`, 5x7) y la lógica de opciones de `ask`/`confirm`
+(`src/ask.ts`) son piezas puras propias de esta versión, también con tests. Se
+verificó en vivo contra un Launchpad X real: pad individual, las animaciones/
+patterns, texto scrolleando, `ask`/`confirm`, `wait-for-press`, y los dos hooks.
 
 Nota de diseño encontrada probando en vivo: a diferencia del server MCP (que mantiene
 una conexión persistente y solo sale de "programmer mode" al cerrar la sesión), esta
