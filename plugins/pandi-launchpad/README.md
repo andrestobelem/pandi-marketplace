@@ -19,14 +19,21 @@ Todos los comandos: `node src/cli.ts <comando> [args...]` (o con
 JSON de entrada/salida: `set`, `show`, `clear`, `pulse-all`, `progress-bar`, `sweep`,
 `blink-all`, `rainbow-sweep`, `scroll-text`, `icon`, `focus-timer`, `ask`, `ask-multi`,
 `confirm`, `wait-for-press`, más `notify <kind>` y `notify-text <mensaje> [kind]`
-(usados por los hooks), y `safety-gate` (usado por el hook `PreToolUse`, no se invoca
-a mano).
+(usados por los hooks `Stop`/`Notification`), y `safety-gate`/`pulse-all`/`clear`
+(usados por los hooks `PreToolUse`/`PreCompact`/`PostCompact`, no se invocan a mano).
 
 ## Notificaciones automáticas (hooks)
 
 `Stop` → texto "Listo" scrolleando en verde, `Notification` → "Atencion" scrolleando
 en rojo. Cada hook llama a `node cli.ts notify-text <mensaje> <kind> || true`, así que
 un Launchpad desconectado nunca bloquea el evento real.
+
+`PreCompact`/`PostCompact` → `pulse-all blue` / `clear`, como señal ambiente de "hay
+una compactación de contexto en curso" mientras dura (no hay hook de progreso
+continuo en Claude Code — `PreCompact`/`PostCompact` solo marcan el antes/después, ver
+issue de origen). El pulso lo anima el propio hardware del Launchpad en modo `pulse`
+una vez prendido, así que sigue "vivo" aunque el proceso de la CLI ya haya terminado;
+`PostCompact` simplemente lo apaga.
 
 `PreToolUse` (matcher `Bash`) → `node cli.ts safety-gate`, que lee el payload del hook
 por stdin y decide vía `src/risky-command.ts` si el comando es riesgoso (force-push,
