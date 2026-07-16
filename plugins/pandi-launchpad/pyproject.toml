@@ -1,6 +1,6 @@
 [project]
 name = "pandi-launchpad"
-version = "0.2.0"
+version = "0.3.0"
 description = "MCP server that turns a Novation Launchpad X into a two-way notification/prompt channel for Claude Code."
 requires-python = ">=3.11"
 dependencies = [

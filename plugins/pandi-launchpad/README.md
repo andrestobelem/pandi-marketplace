@@ -24,6 +24,10 @@ Tools MCP (Claude las llama cuando lo necesita, no hace falta que se lo pidas):
   (0-100), columna por columna, como una barra de progreso.
 - `lp_sweep(color="cyan", cycles=1)` — anima una columna que barre el grid de
   izquierda a derecha. Bloquea mientras dura la animación.
+- `lp_blink_all(color="yellow", times=3)` — hace parpadear todo el grid on/off.
+  Bloquea mientras dura la animación.
+- `lp_rainbow_sweep(cycles=1)` — anima una paleta arcoíris rotando columna por
+  columna. Bloquea mientras dura la animación.
 
 Colores disponibles: `off, red, green, blue, yellow, white, orange, purple, cyan, pink,
 lime, teal, gold, indigo, brown, gray, dark_red, dark_green, dark_blue, magenta`. Para
@@ -75,7 +79,7 @@ La lógica de protocolo está tomada del *Launchpad X Programmer's Reference Man
 oficial de Novation/Focusrite. La lógica pura (mapeo de pads, colores, mensajes SysEx)
 tiene tests unitarios en `tests/` y además se probó en vivo contra un Launchpad X real:
 las 4 esquinas con colores exactos, detección de botón, progress bar, color hex custom,
-sweep, pulse, y los dos hooks.
+sweep, pulse, los dos hooks, `lp_ask`, blink y rainbow sweep.
 
 ## Desarrollo
 

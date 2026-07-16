@@ -1,6 +1,6 @@
 {
   "name": "pandi-launchpad",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MCP server que convierte un Novation Launchpad X en un canal de luces + botones para que Claude te avise cosas y te pregunte, apretando pads.",
   "author": { "name": "Andrés Tobelem" },
   "keywords": ["midi", "launchpad", "novation", "hardware", "notifications"],
