@@ -23,3 +23,14 @@ export function confirmOptions(yesLabel: string = "si", noLabel: string = "no"):
     { label: noLabel, col: 6, row: 1, color: "red" },
   ];
 }
+
+/** Color for the countdown bar: `urgentColor` once `remainingMs` drops to (or
+ * below) `urgentMs`, `normalColor` otherwise. */
+export function countdownColor(
+  remainingMs: number,
+  urgentMs: number = 3000,
+  normalColor: string = "white",
+  urgentColor: string = "red",
+): string {
+  return remainingMs <= urgentMs ? urgentColor : normalColor;
+}

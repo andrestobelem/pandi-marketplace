@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { confirmOptions, optionCells } from "../src/ask.ts";
+import { confirmOptions, countdownColor, optionCells } from "../src/ask.ts";
 
 describe("optionCells", () => {
   it("builds one cell per pad in each option's block, keyed by pad note", () => {
@@ -49,5 +49,25 @@ describe("confirmOptions", () => {
       { label: "dale", col: 1, row: 1, color: "green" },
       { label: "paso", col: 6, row: 1, color: "red" },
     ]);
+  });
+});
+
+describe("countdownColor", () => {
+  it("uses the normal color above the urgent threshold", () => {
+    expect(countdownColor(5000, 3000, "white", "red")).toBe("white");
+  });
+
+  it("uses the urgent color at or below the threshold", () => {
+    expect(countdownColor(3000, 3000, "white", "red")).toBe("red");
+    expect(countdownColor(2999, 3000, "white", "red")).toBe("red");
+  });
+
+  it("defaults to a 3s white/red urgent threshold", () => {
+    expect(countdownColor(3001)).toBe("white");
+    expect(countdownColor(3000)).toBe("red");
+  });
+
+  it("respects custom colors", () => {
+    expect(countdownColor(1000, 3000, "blue", "yellow")).toBe("yellow");
   });
 });

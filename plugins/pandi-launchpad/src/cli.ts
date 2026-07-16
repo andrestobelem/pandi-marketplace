@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { confirmOptions, type Option, optionCells } from "./ask.ts";
+import { confirmOptions, countdownColor, type Option, optionCells } from "./ask.ts";
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
 import { type Cell, type Mode, fullGridCells, noteToCoord, padNote, progressBarCells, timerBarCells } from "./protocol.ts";
@@ -23,8 +23,9 @@ async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds
   try {
     let elapsedMs = 0;
     while (elapsedMs < totalMs && pressedNote === null) {
-      lp.show(timerBarCells((totalMs - elapsedMs) / totalMs));
-      const waitMs = Math.min(COUNTDOWN_TICK_MS, totalMs - elapsedMs);
+      const remainingMs = totalMs - elapsedMs;
+      lp.show(timerBarCells(remainingMs / totalMs, countdownColor(remainingMs)));
+      const waitMs = Math.min(COUNTDOWN_TICK_MS, remainingMs);
       pressedNote = await lp.pollPress(waitMs, wantedNotes);
       elapsedMs += waitMs;
     }
