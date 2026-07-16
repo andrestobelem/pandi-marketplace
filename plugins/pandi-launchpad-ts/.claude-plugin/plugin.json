@@ -1,0 +1,7 @@
+{
+  "name": "pandi-launchpad-ts",
+  "version": "0.1.0",
+  "description": "Versión TypeScript, sin MCP, del puente entre un Novation Launchpad X y Claude Code: un skill que invoca una CLI de Node en vez de un MCP server.",
+  "author": { "name": "Andrés Tobelem" },
+  "keywords": ["midi", "launchpad", "novation", "hardware", "notifications", "typescript"]
+}
