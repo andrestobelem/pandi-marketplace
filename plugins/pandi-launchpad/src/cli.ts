@@ -203,6 +203,20 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
       lp.show(fullGridCells("off"));
       return { result: `showed icon ${JSON.stringify(name)} (${color ?? "white"})` };
     }
+    case "focus-timer": {
+      const [minutes] = args;
+      const totalMs = Number(minutes) * 60_000;
+      let elapsedMs = 0;
+      while (elapsedMs < totalMs) {
+        const remainingMs = totalMs - elapsedMs;
+        lp.show(timerBarCells(remainingMs / totalMs, countdownColor(remainingMs)));
+        const waitMs = Math.min(COUNTDOWN_TICK_MS, remainingMs);
+        await sleep(waitMs);
+        elapsedMs += waitMs;
+      }
+      lp.show(timerBarCells(0));
+      return { result: `focus timer for ${minutes} minute(s) done` };
+    }
     case "notify": {
       const [kind] = args;
       const { color, mode } = resolveEvent(kind ?? "done");

@@ -43,6 +43,9 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
   (`check`, `x`, `hourglass`, `arrow-up`, `arrow-down`, ver `src/icons.ts`) por
   `durationMs` y limpia el grid. Más rápido de leer que `scroll-text` para eventos
   frecuentes (éxito, error, esperando).
+- `focus-timer <minutos>` — cuenta regresiva standalone reusando la countdown bar de
+  `ask`/`confirm` (fila 8, blanca y roja en los últimos 3s), sin preguntar nada.
+  Bloquea mientras dura.
 
 ## Comandos que bloquean esperando un press físico
 
