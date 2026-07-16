@@ -7,6 +7,11 @@
       "name": "pandi-launchpad",
       "source": "./plugins/pandi-launchpad",
       "description": "Usa un Novation Launchpad X como canal de luces + botones para que Claude te notifique y te pregunte cosas mientras trabaja."
+    },
+    {
+      "name": "pandi-launchpad-ts",
+      "source": "./plugins/pandi-launchpad-ts",
+      "description": "Igual que pandi-launchpad pero en TypeScript, sin MCP server: expone un skill que invoca una CLI de Node."
     }
   ]
 }
