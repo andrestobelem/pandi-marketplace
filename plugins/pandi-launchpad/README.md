@@ -35,6 +35,11 @@ issue de origen). El pulso lo anima el propio hardware del Launchpad en modo `pu
 una vez prendido, así que sigue "vivo" aunque el proceso de la CLI ya haya terminado;
 `PostCompact` simplemente lo apaga.
 
+`SubagentStop` → `pulse-all purple`, distinto del verde de `Stop`, para señalar "un
+subagente terminó" sin confundirlo con el fin de la sesión principal. No se apaga
+explícitamente (queda pulsando hasta el próximo evento que reescriba el grid); si se
+corren varios subagentes seguidos el pulso simplemente se refresca en el mismo color.
+
 `PreToolUse` (matcher `Bash`) → `node cli.ts safety-gate`, que lee el payload del hook
 por stdin y decide vía `src/risky-command.ts` si el comando es riesgoso (force-push,
 `reset --hard`, `rm -rf`, etc.). Si no lo es, o no hay Launchpad conectado, devuelve
