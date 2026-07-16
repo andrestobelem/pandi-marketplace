@@ -64,11 +64,30 @@ de opciones de `ask`/`confirm` (`src/ask.ts`) y el matcher de comandos riesgosos
 las animaciones/patterns, texto scrolleando, `ask`/`confirm`, `wait-for-press`, y los
 dos hooks de notificación.
 
-`safety-gate`/`PreToolUse` **no** se pudo verificar en vivo de forma confiable: el
-Launchpad X usado para probar devolvió un press espontáneo del mismo pad ("permitir")
-en dos corridas separadas de `confirm` sin que nadie lo tocara, algo a investigar en
-el hardware/cableado antes de confiar en esta feature con un dispositivo real
-conectado.
+`safety-gate`/`PreToolUse` **no** se pudo verificar en vivo de forma totalmente
+confiable: el Launchpad X usado para probar resolvió `confirm` solo, sin que nadie lo
+tocara, en un puñado de corridas repartidas en dos sesiones de prueba distintas.
+Datos reunidos hasta ahora:
+
+- No es un pad específico trabado: las resoluciones espontáneas dieron labels
+  distintos entre sí ("si" y "no" en corridas diferentes), no siempre el mismo pad.
+- Parece correlacionado con la *primera* invocación después de que el dispositivo
+  estuvo un rato sin uso: en la sesión de prueba más reciente, las primeras 2
+  corridas de `confirm` de la sesión resolvieron solas, pero las 25 corridas
+  siguientes, una atrás de la otra sin pausas, dieron timeout limpio sin excepción.
+- Un raw-listen en el puerto de entrada (sin dibujar nada) y una reproducción
+  sintética del loop de dibujo de `confirm` (mismo patrón de SysEx que `runAsk`, 6
+  corridas) no lograron capturar el evento — el único mensaje visto fue el propio
+  eco del SysEx de programmer-mode, que no puede confundirse con un note-on (los
+  mensajes SysEx arrancan con `0xF0`, y `0xF0 & 0xF0 !== 0x90`).
+
+Hipótesis más plausible con estos datos: algo del lado del driver/SO (buffering de
+eventos MIDI encolados de un uso anterior, o un burst de "asentamiento" del propio
+dispositivo al reabrir el puerto tras estar idle) se entrega en la primera apertura
+de puerto tras un período sin uso — no necesariamente un pad físicamente roto. Sigue
+sin confirmarse; no confiar ciegamente en esta feature con un dispositivo real
+conectado hasta verificarlo más, en particular repitiendo la prueba después de
+dejar el dispositivo idle un rato (no en corridas consecutivas).
 
 Nota de diseño: la CLI abre y cierra una conexión MIDI nueva en cada invocación (no
 mantiene un proceso persistente) — por eso `close()` en `src/device.ts` **no** apaga
