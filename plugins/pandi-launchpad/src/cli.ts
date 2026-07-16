@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { confirmOptions, countdownColor, type DoneOption, multiSelectCells, type Option, optionCells } from "./ask.ts";
+import { confirmOptions, countdownColor, type DoneOption, flashCells, multiSelectCells, type Option, optionCells } from "./ask.ts";
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
 import { iconCells } from "./icons.ts";
@@ -18,6 +18,7 @@ function unwrap(value: string | undefined): string | undefined {
 const INPUT_COMMANDS = new Set(["ask", "ask-multi", "confirm", "wait-for-press"]);
 
 const COUNTDOWN_TICK_MS = 1000;
+const TIMEOUT_FLASH_MS = 400;
 
 async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds: number): Promise<unknown> {
   const { cells, byNote } = optionCells(options);
@@ -36,6 +37,10 @@ async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds
       elapsedMs += waitMs;
     }
   } finally {
+    if (pressedNote === null) {
+      lp.show(flashCells(cells));
+      await sleep(TIMEOUT_FLASH_MS);
+    }
     lp.show(cells.map((c) => ({ ...c, color: "off" })));
     lp.show(timerBarCells(0));
   }
@@ -80,6 +85,10 @@ async function runAskMulti(
       redraw();
     }
   } finally {
+    if (!confirmed) {
+      lp.show(flashCells(multiSelectCells(options, selected, doneOption).cells));
+      await sleep(TIMEOUT_FLASH_MS);
+    }
     lp.show(fullGridCells("off"));
     lp.show(timerBarCells(0));
   }

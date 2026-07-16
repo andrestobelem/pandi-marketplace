@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { confirmOptions, countdownColor, DEFAULT_DONE_OPTION, multiSelectCells, optionCells } from "../src/ask.ts";
+import { confirmOptions, countdownColor, DEFAULT_DONE_OPTION, flashCells, multiSelectCells, optionCells } from "../src/ask.ts";
 
 describe("optionCells", () => {
   it("builds one cell per pad in each option's block, keyed by pad note", () => {
@@ -106,6 +106,28 @@ describe("multiSelectCells", () => {
   it("respects a custom done option position", () => {
     const { doneNotes } = multiSelectCells(options, new Set(), { col: 3, row: 5, colSpan: 1, rowSpan: 1 });
     expect(doneNotes).toEqual(new Set([53]));
+  });
+});
+
+describe("flashCells", () => {
+  const cells = [
+    { col: 1, row: 1, color: "green", mode: "static" as const },
+    { col: 2, row: 1, color: "white", mode: "flash" as const },
+  ];
+
+  it("recolors every cell to the given color in flash mode, keeping col/row", () => {
+    expect(flashCells(cells, "red")).toEqual([
+      { col: 1, row: 1, color: "red", mode: "flash" },
+      { col: 2, row: 1, color: "red", mode: "flash" },
+    ]);
+  });
+
+  it("defaults to red", () => {
+    expect(flashCells(cells).every((c) => c.color === "red")).toBe(true);
+  });
+
+  it("returns an empty array for an empty input", () => {
+    expect(flashCells([])).toEqual([]);
   });
 });
 

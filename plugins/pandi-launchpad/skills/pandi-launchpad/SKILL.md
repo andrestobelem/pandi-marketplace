@@ -55,7 +55,9 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
   `{"label":str,"col":1-8,"row":1-8,"color":str,"colSpan"?:n,"rowSpan"?:n}`. Devuelve
   `{"label":str}` o `{"label":null,"timed_out":true}`. Mientras espera, la fila 8 se
   usa como barra de cuenta regresiva (se va vaciando de derecha a izquierda); es
-  blanca y pasa a roja en los últimos 3 segundos.
+  blanca y pasa a roja en los últimos 3 segundos. Si vence el timeout, el bloque de
+  opciones parpadea en rojo (~400ms) antes de apagarse, para distinguir "nadie
+  contestó a tiempo" de una pulsación real (que apaga directo, sin parpadeo).
 - `wait-for-press <timeoutSeconds> ['<jsonPads>']` — bloquea hasta que se aprieta
   cualquier pad (o uno de `jsonPads`, un array de `{"col","row"}`). Devuelve
   `{"col":n,"row":n}` o `{"timed_out":true}`.
@@ -71,7 +73,8 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
   selección actual; `jsonDoneOption` opcional la reposiciona:
   `{"col":1-8,"row":1-8,"color"?:str,"colSpan"?:n,"rowSpan"?:n}`. Devuelve
   `{"labels":[...]}` (o con `"timed_out":true` si vence el timeout con lo
-  seleccionado hasta ese momento).
+  seleccionado hasta ese momento). Igual que `ask`, si vence el timeout todo el
+  bloque (opciones + "listo") parpadea en rojo antes de apagarse.
 
 **Importante:** como el dispositivo no tiene pantalla, decí el prompt/opciones en tu
 propia respuesta de texto (antes de correr el comando) para que la persona sepa qué

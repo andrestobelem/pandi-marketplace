@@ -56,6 +56,13 @@ export function confirmOptions(yesLabel: string = "si", noLabel: string = "no"):
   ];
 }
 
+/** Recolors a set of cells to flash `color` - used to distinguish a timed-out
+ * ask/ask-multi (nobody answered in time) from one resolved by a real press,
+ * which otherwise both end in the same "everything off" state. */
+export function flashCells(cells: readonly Cell[], color: string = "red"): Cell[] {
+  return cells.map((c) => ({ ...c, color, mode: "flash" as Mode }));
+}
+
 /** Color for the countdown bar: `urgentColor` once `remainingMs` drops to (or
  * below) `urgentMs`, `normalColor` otherwise. */
 export function countdownColor(
