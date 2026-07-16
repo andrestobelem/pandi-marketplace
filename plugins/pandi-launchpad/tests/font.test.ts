@@ -27,12 +27,55 @@ describe("glyphColumns", () => {
     expect(columns.every((col) => col.every((on) => on === false))).toBe(true);
   });
 
-  it.each(["$", "ñ", "@"])("rejects unsupported character %s", (char) => {
+  it.each(["$", "@"])("rejects unsupported character %s", (char) => {
     expect(() => glyphColumns(char)).toThrow();
   });
 
   it("is case-insensitive", () => {
     expect(glyphColumns("a")).toEqual(glyphColumns("A"));
+  });
+
+  it("renders 'Ñ' as an N with a wavy tilde row on top", () => {
+    // Hand-transposed from the reference glyph (top-to-bottom):
+    //   .#.#.
+    //   #...#
+    //   ##..#
+    //   #.#.#
+    //   #..##
+    //   #...#
+    //   #...#
+    const columns = glyphColumns("Ñ");
+    expect(columns).toEqual([
+      [true, true, true, true, true, true, false],
+      [false, false, false, false, true, false, true],
+      [false, false, false, true, false, false, false],
+      [false, false, true, false, false, false, true],
+      [true, true, true, true, true, true, false],
+    ]);
+  });
+
+  it("renders 'Á' as an A with an acute accent dot on top", () => {
+    // Hand-transposed from the reference glyph (top-to-bottom):
+    //   ..#..
+    //   .###.
+    //   #...#
+    //   #####
+    //   #...#
+    //   #...#
+    //   #...#
+    const columns = glyphColumns("Á");
+    expect(columns).toEqual([
+      [true, true, true, true, true, false, false],
+      [false, false, false, true, false, true, false],
+      [false, false, false, true, false, true, true],
+      [false, false, false, true, false, true, false],
+      [true, true, true, true, true, false, false],
+    ]);
+  });
+
+  it("is case-insensitive for accented characters", () => {
+    expect(glyphColumns("ñ")).toEqual(glyphColumns("Ñ"));
+    expect(glyphColumns("á")).toEqual(glyphColumns("Á"));
   });
 });
 

@@ -29,8 +29,9 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
 - `blink-all [color] [times]` — parpadea todo el grid on/off. Bloquea mientras dura.
 - `rainbow-sweep [cycles]` — anima una paleta arcoíris rotando. Bloquea mientras dura.
 - `scroll-text <texto> [color] [speedMs]` — hace scrollear `<texto>` de derecha a
-  izquierda en fuente 5x7 (soporta A-Z, 0-9, espacio, `. ! ?`; no distingue
-  mayúsculas/minúsculas). Bloquea mientras dura (`speedMs` por columna, default 120).
+  izquierda en fuente 5x7 (soporta A-Z, 0-9, espacio, `. ! ?`, tildes `á é í ó ú` y
+  `ñ`; no distingue mayúsculas/minúsculas). Bloquea mientras dura (`speedMs` por
+  columna, default 120).
 - `notify-text <mensaje> [kind=done]` — como `scroll-text`, pero el color sale de
   `kind` (`done`=verde, `attention`=rojo, cualquier otro=blanco), igual que `notify`.
   Es lo que usan los hooks `Stop`/`Notification` para mostrar un mensaje en vez de
