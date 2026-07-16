@@ -1,0 +1,12 @@
+{
+  "name": "pandi-marketplace",
+  "owner": { "name": "Andrés Tobelem" },
+  "description": "Marketplace propio de plugins para Claude Code.",
+  "plugins": [
+    {
+      "name": "pandi-launchpad",
+      "source": "./plugins/pandi-launchpad",
+      "description": "Usa un Novation Launchpad X como canal de luces + botones para que Claude te notifique y te pregunte cosas mientras trabaja."
+    }
+  ]
+}
