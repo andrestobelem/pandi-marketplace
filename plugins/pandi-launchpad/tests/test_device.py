@@ -7,11 +7,13 @@ from pandi_launchpad.device import (
     RGB,
     colourspec,
     column_cells,
+    full_grid_cells,
     led_sysex,
     note_to_coord,
     pad_note,
     parse_color,
     progress_bar_cells,
+    rainbow_cells,
 )
 
 
@@ -136,3 +138,44 @@ def test_progress_bar_cells_fifty_percent_fills_half():
 def test_progress_bar_cells_clamps_out_of_range_percent():
     assert progress_bar_cells(-10, "red") == progress_bar_cells(0, "red")
     assert progress_bar_cells(150, "red") == progress_bar_cells(100, "red")
+
+
+def test_full_grid_cells_covers_every_pad_once_with_given_color_and_mode():
+    cells = full_grid_cells("blue", "pulse")
+    assert len(cells) == 64
+    assert set((col, row) for col, row, _, _ in cells) == {
+        (col, row) for col in range(1, 9) for row in range(1, 9)
+    }
+    assert all(color == "blue" and mode == "pulse" for _, _, color, mode in cells)
+
+
+def test_full_grid_cells_defaults_to_static_mode():
+    assert all(mode == "static" for _, _, _, mode in full_grid_cells("red"))
+
+
+def test_rainbow_cells_colors_each_column_from_the_palette_in_order():
+    cells = rainbow_cells(palette=["red", "green", "blue"])
+    by_col = {col: color for col, _row, color, _mode in cells}
+    assert by_col[1] == "red"
+    assert by_col[2] == "green"
+    assert by_col[3] == "blue"
+    assert by_col[4] == "red"  # wraps around the 3-colour palette
+
+
+def test_rainbow_cells_offset_rotates_which_colour_starts_at_column_1():
+    cells = rainbow_cells(offset=1, palette=["red", "green", "blue"])
+    by_col = {col: color for col, _row, color, _mode in cells}
+    assert by_col[1] == "green"
+    assert by_col[2] == "blue"
+    assert by_col[3] == "red"
+
+
+def test_rainbow_cells_covers_all_64_pads():
+    assert len(rainbow_cells()) == 64
+
+
+def test_rainbow_cells_same_column_has_same_colour_across_all_rows():
+    cells = rainbow_cells(palette=["red", "green", "blue"])
+    for col in range(1, 9):
+        colors_in_col = {color for c, _row, color, _mode in cells if c == col}
+        assert len(colors_in_col) == 1

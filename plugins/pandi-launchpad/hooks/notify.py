@@ -16,10 +16,10 @@ def main() -> None:
     kind = sys.argv[1] if len(sys.argv) > 1 else "done"
     color, mode = resolve_event(kind)
     try:
-        from pandi_launchpad.device import LaunchpadX
+        from pandi_launchpad.device import LaunchpadX, full_grid_cells
 
         lp = LaunchpadX(open_input=False)
-        lp.show([(col, row, color, mode) for col in range(1, 9) for row in range(1, 9)])
+        lp.show(full_grid_cells(color, mode))
     except Exception as exc:  # pragma: no cover - best-effort hardware notification
         print(f"pandi-launchpad hook: {exc}", file=sys.stderr)
 

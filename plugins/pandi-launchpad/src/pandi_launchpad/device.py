@@ -119,6 +119,24 @@ def progress_bar_cells(percent: float, color: str = "green") -> list[tuple[int, 
     return cells
 
 
+def full_grid_cells(color: str, mode: str = "static") -> list[tuple[int, int, str, str]]:
+    """All 64 pads of the grid, as (col, row, color, mode) cells ready for `show`."""
+    return [(col, row, color, mode) for col in range(1, 9) for row in range(1, 9)]
+
+
+RAINBOW_PALETTE = ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "magenta"]
+
+
+def rainbow_cells(offset: int = 0, palette: list[str] | None = None) -> list[tuple[int, int, str, str]]:
+    """All 64 pads, one solid colour per column, cycling through `palette` starting at `offset`."""
+    palette = palette or RAINBOW_PALETTE
+    return [
+        (col, row, palette[(col - 1 + offset) % len(palette)], "static")
+        for col in range(1, 9)
+        for row in range(1, 9)
+    ]
+
+
 def led_sysex(specs: list[tuple[int, int, tuple[int, ...]]]) -> mido.Message:
     data: list[int] = list(_SYSEX_HEADER) + [0x03]
     for lighting_type, index, payload in specs:
@@ -169,7 +187,7 @@ class LaunchpadX:
         self.show([(col, row, color, mode)])
 
     def clear(self) -> None:
-        self.show([(col, row, "off", "static") for col in range(1, 9) for row in range(1, 9)])
+        self.show(full_grid_cells("off"))
 
     def sweep(self, color: str, cycles: int = 1, speed: float = 0.06) -> None:
         """Animate a single-column highlight sweeping left-to-right across the grid."""
@@ -178,6 +196,22 @@ class LaunchpadX:
                 self.show(column_cells(col, color))
                 time.sleep(speed)
                 self.show(column_cells(col, "off"))
+
+    def blink(self, color: str, times: int = 3, speed: float = 0.2) -> None:
+        """Flash the whole grid on/off `times` times."""
+        for _ in range(times):
+            self.show(full_grid_cells(color))
+            time.sleep(speed)
+            self.show(full_grid_cells("off"))
+            time.sleep(speed)
+
+    def rainbow_sweep(self, cycles: int = 1, speed: float = 0.15) -> None:
+        """Animate the rainbow palette rotating one column per frame, `cycles` full rotations."""
+        palette_len = len(RAINBOW_PALETTE)
+        for _ in range(cycles):
+            for offset in range(palette_len):
+                self.show(rainbow_cells(offset=offset))
+                time.sleep(speed)
 
     def poll_press(self, timeout: float, wanted_notes: set[int] | None = None) -> int | None:
         """Block until a matching pad is pressed (Note On, velocity > 0), or timeout. Returns the note number."""

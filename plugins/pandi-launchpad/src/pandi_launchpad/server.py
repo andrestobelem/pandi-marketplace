@@ -6,7 +6,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from .device import LaunchpadX, note_to_coord, parse_color, progress_bar_cells
+from .device import LaunchpadX, full_grid_cells, note_to_coord, parse_color, progress_bar_cells
 
 mcp = FastMCP("pandi-launchpad")
 
@@ -62,7 +62,7 @@ def lp_show(cells: list[dict[str, Any]]) -> str:
 def lp_pulse_all(color: str = "blue") -> str:
     """Pulse every pad the same named colour - a 'thinking' / heartbeat indicator."""
     _check_color(color, "pulse")
-    _get_device().show([(col, row, color, "pulse") for col in range(1, 9) for row in range(1, 9)])
+    _get_device().show(full_grid_cells(color, "pulse"))
     return f"pulsing all pads {color}"
 
 
@@ -80,6 +80,21 @@ def lp_sweep(color: str = "cyan", cycles: int = 1) -> str:
     _check_color(color, "static")
     _get_device().sweep(color, cycles=cycles)
     return f"swept {color} x{cycles}"
+
+
+@mcp.tool()
+def lp_blink_all(color: str = "yellow", times: int = 3) -> str:
+    """Flash the whole grid on/off `times` times. Blocks for the duration."""
+    _check_color(color)
+    _get_device().blink(color, times=times)
+    return f"blinked {color} x{times}"
+
+
+@mcp.tool()
+def lp_rainbow_sweep(cycles: int = 1) -> str:
+    """Animate a rainbow rotating across the grid, one column per frame. Blocks for the duration."""
+    _get_device().rainbow_sweep(cycles=cycles)
+    return f"rainbow swept x{cycles}"
 
 
 @mcp.tool()
