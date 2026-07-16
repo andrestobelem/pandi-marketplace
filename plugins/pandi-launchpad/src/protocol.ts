@@ -162,11 +162,12 @@ export function rectCells(
  * or past the end) from a textColumns()-style column matrix onto the 8x8 grid.
  * Row 8 is always blank (the 5x7 font only fills rows 1-7); columns outside
  * the matrix's range are blank too - this is how the text scrolls on/off screen. */
-export function textFrameCells(columns: readonly boolean[][], offset: number, color: string): Cell[] {
+export function textFrameCells(columns: readonly boolean[][], offset: number, color: string | readonly string[]): Cell[] {
   return gridCells("static", (col, row) => {
     if (row === 8) return "off";
-    const glyphCol = columns[offset + col - 1];
-    return glyphCol?.[row - 1] ? color : "off";
+    const index = offset + col - 1;
+    if (!columns[index]?.[row - 1]) return "off";
+    return typeof color === "string" ? color : color[index]!;
   });
 }
 

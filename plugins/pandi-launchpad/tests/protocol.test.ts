@@ -233,6 +233,17 @@ describe("textFrameCells", () => {
     expect(byCoord.get("1,1")).toBe("off");
     expect(byCoord.get("2,1")).toBe("red");
   });
+
+  it("accepts a per-column color array instead of a single color", () => {
+    const twoCols: boolean[][] = [
+      [true, false, false, false, false, false, false],
+      [true, false, false, false, false, false, false],
+    ];
+    const cells = textFrameCells(twoCols, 0, ["red", "blue"]);
+    const byCoord = new Map(cells.map((c) => [`${c.col},${c.row}`, c.color]));
+    expect(byCoord.get("1,1")).toBe("red");
+    expect(byCoord.get("2,1")).toBe("blue");
+  });
 });
 
 describe("timerBarCells", () => {

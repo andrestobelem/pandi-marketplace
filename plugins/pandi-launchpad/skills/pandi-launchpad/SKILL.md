@@ -32,6 +32,9 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
   izquierda en fuente 5x7 (soporta A-Z, 0-9, espacio, `. ! ?`, tildes `á é í ó ú` y
   `ñ`; no distingue mayúsculas/minúsculas). Bloquea mientras dura (`speedMs` por
   columna, default 120).
+- `rainbow-text <texto> [speedMs]` — como `scroll-text`, pero cada carácter usa un
+  color distinto de una paleta arcoíris rotando, en vez de un único color para
+  todo el texto.
 - `notify-text <mensaje> [kind=done]` — como `scroll-text`, pero el color sale de
   `kind` (`done`=verde, `attention`=rojo, cualquier otro=blanco), igual que `notify`.
   Es lo que usan los hooks `Stop`/`Notification` para mostrar un mensaje en vez de

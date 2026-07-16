@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { glyphColumns, textColumns } from "../src/font.ts";
+import { glyphColumns, textColumns, textColumnColors } from "../src/font.ts";
 
 describe("glyphColumns", () => {
   it("renders 'A' as a symmetric 5x7 glyph (columns bottom-to-top)", () => {
@@ -91,5 +91,21 @@ describe("textColumns", () => {
     expect(columns.slice(0, 5)).toEqual(glyphColumns("A"));
     expect(columns[5]).toEqual(blank);
     expect(columns.slice(6, 11)).toEqual(glyphColumns("A"));
+  });
+});
+
+describe("textColumnColors", () => {
+  it("assigns one color per character, cycling the palette, one entry per column of textColumns", () => {
+    const colors = textColumnColors("AB", ["red", "blue"]);
+    expect(colors).toHaveLength(textColumns("AB").length); // 5 + 1 spacer + 5
+    expect(colors.slice(0, 5)).toEqual(Array(5).fill("red")); // A's 5 columns
+    expect(colors[5]).toBe("red"); // spacer reuses the color of the character before it
+    expect(colors.slice(6, 11)).toEqual(Array(5).fill("blue")); // B's 5 columns
+  });
+
+  it("wraps around the palette when there are more characters than colors", () => {
+    const colors = textColumnColors("AB", ["red"]);
+    expect(colors.slice(0, 5)).toEqual(Array(5).fill("red"));
+    expect(colors.slice(6, 11)).toEqual(Array(5).fill("red"));
   });
 });

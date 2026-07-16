@@ -1,5 +1,5 @@
 import midi from "@julusian/midi";
-import { textColumns } from "./font.ts";
+import { textColumns, textColumnColors } from "./font.ts";
 import {
   type Cell,
   type ColourSpec,
@@ -112,6 +112,16 @@ export class LaunchpadX {
     const columns = textColumns(text);
     for (let offset = -8; offset <= columns.length; offset++) {
       this.show(textFrameCells(columns, offset, color));
+      await sleep(speedMs);
+    }
+    this.show(fullGridCells("off"));
+  }
+
+  async scrollRainbowText(text: string, speedMs: number = 180): Promise<void> {
+    const columns = textColumns(text);
+    const colors = textColumnColors(text, RAINBOW_PALETTE);
+    for (let offset = -8; offset <= columns.length; offset++) {
+      this.show(textFrameCells(columns, offset, colors));
       await sleep(speedMs);
     }
     this.show(fullGridCells("off"));

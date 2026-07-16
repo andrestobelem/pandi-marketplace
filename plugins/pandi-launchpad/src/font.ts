@@ -73,3 +73,19 @@ export function textColumns(text: string): boolean[][] {
     .map((char) => glyphColumns(char))
     .flatMap((columns, i) => (i === 0 ? columns : [SPACER_COLUMN, ...columns]));
 }
+
+/** One color per column of textColumns(text): each character's block of
+ * GLYPH_WIDTH columns gets palette[charIndex % palette.length], cycling
+ * through the palette. Spacer columns reuse the preceding character's color -
+ * they're blank, so it never shows. */
+export function textColumnColors(text: string, palette: readonly string[]): string[] {
+  const colors: string[] = [];
+  let prevColor: string | undefined;
+  Array.from(text).forEach((_char, i) => {
+    const color = palette[i % palette.length]!;
+    if (i > 0) colors.push(prevColor!);
+    for (let c = 0; c < GLYPH_WIDTH; c++) colors.push(color);
+    prevColor = color;
+  });
+  return colors;
+}
