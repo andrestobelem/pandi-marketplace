@@ -1,0 +1,112 @@
+from __future__ import annotations
+
+import atexit
+import os
+from typing import Any
+
+from mcp.server.fastmcp import FastMCP
+
+from .device import COLORS, LaunchpadX, note_to_coord
+
+mcp = FastMCP("pandi-launchpad")
+
+_device: LaunchpadX | None = None
+
+
+def _unwrap(value: str | None) -> str | None:
+    """Claude Code leaves unresolved ${VAR} placeholders in env when the var isn't set."""
+    if not value or (value.startswith("${") and value.endswith("}")):
+        return None
+    return value
+
+
+def _get_device() -> LaunchpadX:
+    global _device
+    if _device is None:
+        _device = LaunchpadX(
+            output_name=_unwrap(os.getenv("LAUNCHPAD_OUTPUT_PORT")),
+            input_name=_unwrap(os.getenv("LAUNCHPAD_INPUT_PORT")),
+        )
+        atexit.register(_device.close)
+    return _device
+
+
+def _check_color(color: str) -> str:
+    if color not in COLORS:
+        raise ValueError(f"Unknown colour {color!r}. Available: {', '.join(sorted(COLORS))}")
+    return color
+
+
+@mcp.tool()
+def lp_set(col: int, row: int, color: str, mode: str = "static") -> str:
+    """Light a single Launchpad X pad. col/row are 1-8, with (1,1) the bottom-left pad.
+    mode is 'static' (exact colour), 'flash' or 'pulse' (approximate palette colour)."""
+    _check_color(color)
+    _get_device().set_pixel(col, row, color, mode)
+    return f"pad ({col},{row}) set to {color} ({mode})"
+
+
+@mcp.tool()
+def lp_show(cells: list[dict[str, Any]]) -> str:
+    """Light multiple pads in a single batch.
+    Each cell: {"col": 1-8, "row": 1-8, "color": str, "mode": "static"|"flash"|"pulse"}."""
+    specs = [
+        (cell["col"], cell["row"], _check_color(cell["color"]), cell.get("mode", "static"))
+        for cell in cells
+    ]
+    _get_device().show(specs)
+    return f"lit {len(specs)} pad(s)"
+
+
+@mcp.tool()
+def lp_clear() -> str:
+    """Turn off every pad on the Launchpad X."""
+    _get_device().clear()
+    return "cleared"
+
+
+@mcp.tool()
+def lp_ask(prompt: str, options: list[dict[str, Any]], timeout: float = 60.0) -> dict[str, Any]:
+    """Ask the user a question by lighting up labelled pads and blocking until one is pressed.
+
+    prompt is shown to you only for your own bookkeeping (the device has no screen) -
+    make sure the option colours/positions make the choice obvious on their own, and
+    consider saying the prompt out loud in your own reply too.
+    Each option: {"label": str, "col": 1-8, "row": 1-8, "color": str}.
+    Returns {"label": <pressed label>} or {"label": None, "timed_out": True}.
+    """
+    device = _get_device()
+    by_note = {}
+    specs = []
+    for opt in options:
+        color = _check_color(opt["color"])
+        by_note[opt["row"] * 10 + opt["col"]] = opt["label"]
+        specs.append((opt["col"], opt["row"], color, "static"))
+    device.show(specs)
+    try:
+        pressed_note = device.poll_press(timeout, wanted_notes=set(by_note))
+    finally:
+        device.show([(opt["col"], opt["row"], "off", "static") for opt in options])
+    if pressed_note is None:
+        return {"label": None, "timed_out": True}
+    return {"label": by_note[pressed_note]}
+
+
+@mcp.tool()
+def lp_wait_for_press(pads: list[dict[str, int]] | None = None, timeout: float = 60.0) -> dict[str, Any]:
+    """Block until a pad is pressed. If pads (list of {"col","row"}) is given, only those count.
+    Returns {"col": int, "row": int} or {"timed_out": True}."""
+    wanted = {p["row"] * 10 + p["col"] for p in pads} if pads else None
+    note = _get_device().poll_press(timeout, wanted_notes=wanted)
+    if note is None:
+        return {"timed_out": True}
+    col, row = note_to_coord(note)
+    return {"col": col, "row": row}
+
+
+def main() -> None:
+    mcp.run()
+
+
+if __name__ == "__main__":
+    main()
