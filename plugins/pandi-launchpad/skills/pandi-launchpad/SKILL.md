@@ -62,6 +62,18 @@ propia respuesta de texto (antes de correr el comando) para que la persona sepa 
 pad apretar y cuándo — el comando en sí no muestra nada. Decile explícitamente que
 tiene N segundos para apretar.
 
+## Gate de seguridad (hook `PreToolUse`)
+
+`safety-gate` no se invoca a mano: lo corre automáticamente el hook `PreToolUse`
+(`hooks/hooks.json`) antes de cada llamada a la tool `Bash`. Lee el payload del hook
+por stdin; si el comando no es riesgoso (o no hay Launchpad conectado), no abre el
+dispositivo y devuelve `permissionDecision: "ask"` (sigue el flujo normal de permisos).
+Si el comando matchea un patrón riesgoso (`git push --force`, `git reset --hard`,
+`git clean -f`, `git branch -D`, `git checkout`/`restore` que descartan cambios,
+`rm -rf`, ver `src/risky-command.ts`), prende el bloque verde ("permitir") / rojo
+("bloquear") de `confirm` y bloquea hasta que se aprieta un pad o vence el timeout de
+30s — sin respuesta a tiempo cuenta como bloqueo (fail-closed).
+
 ## Requisitos
 
 Un Launchpad X conectado por USB antes de invocar cualquier comando. Si no detecta el

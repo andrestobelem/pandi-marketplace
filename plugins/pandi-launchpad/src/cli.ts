@@ -3,6 +3,7 @@ import { confirmOptions, countdownColor, type Option, optionCells } from "./ask.
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
 import { type Cell, type Mode, fullGridCells, noteToCoord, padNote, progressBarCells, timerBarCells } from "./protocol.ts";
+import { riskyCommandReason } from "./risky-command.ts";
 
 function unwrap(value: string | undefined): string | undefined {
   if (!value || (value.startsWith("${") && value.endsWith("}"))) return undefined;
@@ -37,8 +38,65 @@ async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds
   return { label: byNote.get(pressedNote) ?? null };
 }
 
+type PermissionDecision = "allow" | "deny" | "ask";
+
+function hookDecision(decision: PermissionDecision, reason?: string): unknown {
+  return {
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: decision,
+      ...(reason ? { permissionDecisionReason: reason } : {}),
+    },
+  };
+}
+
+async function readStdin(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+/** PreToolUse hook: gates risky Bash commands (force-push, reset --hard, rm
+ * -rf, ...) behind a physical confirm press. Never opens the device for the
+ * common case (non-risky command, or no device connected) so it stays out
+ * of the way of every other Bash call. */
+async function runSafetyGate(): Promise<unknown> {
+  let input: { tool_name?: string; tool_input?: { command?: string } };
+  try {
+    input = JSON.parse(await readStdin());
+  } catch {
+    return hookDecision("ask");
+  }
+  if (input.tool_name !== "Bash") return hookDecision("ask");
+  const reason = riskyCommandReason(input.tool_input?.command ?? "");
+  if (!reason) return hookDecision("ask");
+
+  let lp: LaunchpadX;
+  try {
+    lp = new LaunchpadX({
+      outputName: unwrap(process.env.LAUNCHPAD_OUTPUT_PORT),
+      inputName: unwrap(process.env.LAUNCHPAD_INPUT_PORT),
+      openInput: true,
+    });
+  } catch {
+    return hookDecision("ask"); // no Launchpad connected: fall back to the normal permission prompt
+  }
+  try {
+    const { label } = (await runAsk(lp, confirmOptions("permitir", "bloquear"), 30)) as { label: string | null };
+    if (label === "permitir") return hookDecision("allow", `Confirmado en el Launchpad (motivo: ${reason}).`);
+    return hookDecision("deny", `Bloqueado en el Launchpad (motivo: ${reason}, sin respuesta a tiempo cuenta como bloqueo).`);
+  } finally {
+    lp.close();
+  }
+}
+
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
+  if (command === "safety-gate") {
+    process.stdout.write(JSON.stringify(await runSafetyGate()) + "\n");
+    return;
+  }
+
   const openInput = INPUT_COMMANDS.has(command ?? "");
   const lp = new LaunchpadX({
     outputName: unwrap(process.env.LAUNCHPAD_OUTPUT_PORT),
