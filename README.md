@@ -15,7 +15,11 @@ agregando mis extensiones.
 ## Plugins
 
 - [`pandi-launchpad`](plugins/pandi-launchpad) — usa un Novation Launchpad X como
-  canal de luces + botones para que Claude te notifique y te pregunte cosas.
+  canal de luces + botones para que Claude te notifique y te pregunte cosas. MCP
+  server en Python.
+- [`pandi-launchpad-ts`](plugins/pandi-launchpad-ts) — lo mismo, pero en TypeScript y
+  sin MCP: un skill que invoca una CLI de Node. En evaluación en paralelo con el de
+  arriba para comparar los dos enfoques.
 
 ## Estructura
 
