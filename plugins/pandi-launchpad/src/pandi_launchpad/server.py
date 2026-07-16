@@ -6,7 +6,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from .device import COLORS, LaunchpadX, note_to_coord
+from .device import LaunchpadX, note_to_coord, parse_color, progress_bar_cells
 
 mcp = FastMCP("pandi-launchpad")
 
@@ -31,17 +31,17 @@ def _get_device() -> LaunchpadX:
     return _device
 
 
-def _check_color(color: str) -> str:
-    if color not in COLORS:
-        raise ValueError(f"Unknown colour {color!r}. Available: {', '.join(sorted(COLORS))}")
+def _check_color(color: str, mode: str = "static") -> str:
+    parse_color(color, mode)  # raises ValueError with a clear message if invalid
     return color
 
 
 @mcp.tool()
 def lp_set(col: int, row: int, color: str, mode: str = "static") -> str:
     """Light a single Launchpad X pad. col/row are 1-8, with (1,1) the bottom-left pad.
-    mode is 'static' (exact colour), 'flash' or 'pulse' (approximate palette colour)."""
-    _check_color(color)
+    color is a name (see lp_colors) or, for mode='static' only, a '#rrggbb' hex string.
+    mode is 'static' (exact colour), 'flash' or 'pulse' (named colour only, approximate)."""
+    _check_color(color, mode)
     _get_device().set_pixel(col, row, color, mode)
     return f"pad ({col},{row}) set to {color} ({mode})"
 
@@ -51,11 +51,35 @@ def lp_show(cells: list[dict[str, Any]]) -> str:
     """Light multiple pads in a single batch.
     Each cell: {"col": 1-8, "row": 1-8, "color": str, "mode": "static"|"flash"|"pulse"}."""
     specs = [
-        (cell["col"], cell["row"], _check_color(cell["color"]), cell.get("mode", "static"))
+        (cell["col"], cell["row"], _check_color(cell["color"], cell.get("mode", "static")), cell.get("mode", "static"))
         for cell in cells
     ]
     _get_device().show(specs)
     return f"lit {len(specs)} pad(s)"
+
+
+@mcp.tool()
+def lp_pulse_all(color: str = "blue") -> str:
+    """Pulse every pad the same named colour - a 'thinking' / heartbeat indicator."""
+    _check_color(color, "pulse")
+    _get_device().show([(col, row, color, "pulse") for col in range(1, 9) for row in range(1, 9)])
+    return f"pulsing all pads {color}"
+
+
+@mcp.tool()
+def lp_progress_bar(percent: float, color: str = "green") -> str:
+    """Fill the grid proportionally to `percent` (0-100), column by column, as a progress indicator."""
+    _check_color(color, "static")
+    _get_device().show(progress_bar_cells(percent, color))
+    return f"progress bar at {percent}% ({color})"
+
+
+@mcp.tool()
+def lp_sweep(color: str = "cyan", cycles: int = 1) -> str:
+    """Animate a single-column highlight sweeping left-to-right across the grid. Blocks for the duration."""
+    _check_color(color, "static")
+    _get_device().sweep(color, cycles=cycles)
+    return f"swept {color} x{cycles}"
 
 
 @mcp.tool()
