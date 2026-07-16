@@ -6,6 +6,7 @@ import {
   columnCells,
   fullGridCells,
   ledSysex,
+  parseColor,
   RAINBOW_PALETTE,
   rainbowCells,
   SYSEX_HEADER,
@@ -75,6 +76,7 @@ export class LaunchpadX {
   }
 
   async sweep(color: string, cycles: number = 1, speedMs: number = 60): Promise<void> {
+    parseColor(color); // fail before animating rather than partway through it
     for (let c = 0; c < cycles; c++) {
       for (let col = 1; col <= 8; col++) {
         this.show(columnCells(col, color));
@@ -85,6 +87,7 @@ export class LaunchpadX {
   }
 
   async blink(color: string, times: number = 3, speedMs: number = 200): Promise<void> {
+    parseColor(color); // fail before animating rather than partway through it
     for (let i = 0; i < times; i++) {
       this.show(fullGridCells(color));
       await sleep(speedMs);

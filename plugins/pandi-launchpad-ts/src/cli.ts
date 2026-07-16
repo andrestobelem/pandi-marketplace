@@ -1,23 +1,20 @@
 #!/usr/bin/env node
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
-import { type Cell, type Mode, fullGridCells, parseColor, progressBarCells, rectCells } from "./protocol.ts";
+import { type Cell, type Mode, fullGridCells, noteToCoord, padNote, progressBarCells, rectCells } from "./protocol.ts";
 
 function unwrap(value: string | undefined): string | undefined {
   if (!value || (value.startsWith("${") && value.endsWith("}"))) return undefined;
   return value;
 }
 
-function checkColor(color: string, mode: Mode = "static"): string {
-  parseColor(color, mode);
-  return color;
-}
-
 type Option = { label: string; col: number; row: number; color: string; colSpan?: number; rowSpan?: number };
+
+const INPUT_COMMANDS = new Set(["ask", "wait-for-press"]);
 
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
-  const openInput = command === "ask" || command === "wait-for-press";
+  const openInput = INPUT_COMMANDS.has(command ?? "");
   const lp = new LaunchpadX({
     outputName: unwrap(process.env.LAUNCHPAD_OUTPUT_PORT),
     inputName: unwrap(process.env.LAUNCHPAD_INPUT_PORT),
@@ -36,13 +33,11 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
   switch (command) {
     case "set": {
       const [col, row, color, mode] = args;
-      checkColor(color!, (mode as Mode) ?? "static");
       lp.setPixel(Number(col), Number(row), color!, (mode as Mode) ?? "static");
       return { result: `pad (${col},${row}) set to ${color} (${mode ?? "static"})` };
     }
     case "show": {
       const cells = JSON.parse(args[0]!) as Cell[];
-      for (const c of cells) checkColor(c.color, c.mode ?? "static");
       lp.show(cells.map((c) => ({ ...c, mode: c.mode ?? "static" })));
       return { result: `lit ${cells.length} pad(s)` };
     }
@@ -52,25 +47,21 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
     }
     case "pulse-all": {
       const color = args[0] ?? "blue";
-      checkColor(color, "pulse");
       lp.show(fullGridCells(color, "pulse"));
       return { result: `pulsing all pads ${color}` };
     }
     case "progress-bar": {
       const [percent, color] = args;
-      checkColor(color ?? "green", "static");
       lp.show(progressBarCells(Number(percent), color ?? "green"));
       return { result: `progress bar at ${percent}% (${color ?? "green"})` };
     }
     case "sweep": {
       const [color, cycles] = args;
-      checkColor(color ?? "cyan", "static");
       await lp.sweep(color ?? "cyan", cycles ? Number(cycles) : 1);
       return { result: `swept ${color ?? "cyan"} x${cycles ?? 1}` };
     }
     case "blink-all": {
       const [color, times] = args;
-      checkColor(color ?? "yellow");
       await lp.blink(color ?? "yellow", times ? Number(times) : 3);
       return { result: `blinked ${color ?? "yellow"} x${times ?? 3}` };
     }
@@ -91,9 +82,8 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
       const byNote = new Map<number, string>();
       const cells: Cell[] = [];
       for (const opt of options) {
-        checkColor(opt.color);
         for (const { col, row } of rectCells(opt.col, opt.row, opt.colSpan ?? 2, opt.rowSpan ?? 2)) {
-          byNote.set(row * 10 + col, opt.label);
+          byNote.set(padNote(col, row), opt.label);
           cells.push({ col, row, color: opt.color, mode: "static" });
         }
       }
@@ -110,12 +100,10 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
     case "wait-for-press": {
       const [timeoutSeconds, padsJson] = args;
       const pads = padsJson ? (JSON.parse(padsJson) as { col: number; row: number }[]) : undefined;
-      const wanted = pads ? new Set(pads.map((p) => p.row * 10 + p.col)) : undefined;
+      const wanted = pads ? new Set(pads.map((p) => padNote(p.col, p.row))) : undefined;
       const note = await lp.pollPress(Number(timeoutSeconds) * 1000, wanted);
       if (note === null) return { timed_out: true };
-      const col = note % 10;
-      const row = Math.floor(note / 10);
-      return { col, row };
+      return noteToCoord(note);
     }
     default:
       throw new Error(`Unknown command: ${command}`);

@@ -1,7 +1,6 @@
 // Novation Launchpad X SysEx header. Source: Launchpad X Programmer's Reference Manual.
 export const SYSEX_HEADER = [0x00, 0x20, 0x29, 0x02, 0x0c] as const;
 
-export const STATIC = 0;
 export const FLASH = 1;
 export const PULSE = 2;
 export const RGB = 3;
@@ -99,41 +98,35 @@ export function columnCells(col: number, color: string, mode: Mode = "static"): 
   return Array.from({ length: 8 }, (_, i) => ({ col, row: i + 1, color, mode }));
 }
 
-export function progressBarCells(percent: number, color: string = "green"): Cell[] {
-  const clamped = Math.max(0, Math.min(100, percent));
-  const filled = Math.round((clamped / 100) * 64);
+/** All 64 (col, row) pairs of the grid, column-major, with `colorAt` picking each
+ * cell's color from its column/row/1-based-position - shared by every "whole grid"
+ * cell builder below. */
+function gridCells(mode: Mode, colorAt: (col: number, row: number, n: number) => string): Cell[] {
   const cells: Cell[] = [];
   let n = 0;
   for (let col = 1; col <= 8; col++) {
     for (let row = 1; row <= 8; row++) {
       n++;
-      cells.push({ col, row, color: n <= filled ? color : "off", mode: "static" });
+      cells.push({ col, row, color: colorAt(col, row, n), mode });
     }
   }
   return cells;
 }
 
+export function progressBarCells(percent: number, color: string = "green"): Cell[] {
+  const clamped = Math.max(0, Math.min(100, percent));
+  const filled = Math.round((clamped / 100) * 64);
+  return gridCells("static", (_col, _row, n) => (n <= filled ? color : "off"));
+}
+
 export function fullGridCells(color: string, mode: Mode = "static"): Cell[] {
-  const cells: Cell[] = [];
-  for (let col = 1; col <= 8; col++) {
-    for (let row = 1; row <= 8; row++) {
-      cells.push({ col, row, color, mode });
-    }
-  }
-  return cells;
+  return gridCells(mode, () => color);
 }
 
 export const RAINBOW_PALETTE = ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "magenta"];
 
 export function rainbowCells(offset: number = 0, palette: readonly string[] = RAINBOW_PALETTE): Cell[] {
-  const cells: Cell[] = [];
-  for (let col = 1; col <= 8; col++) {
-    const color = palette[(col - 1 + offset) % palette.length]!;
-    for (let row = 1; row <= 8; row++) {
-      cells.push({ col, row, color, mode: "static" });
-    }
-  }
-  return cells;
+  return gridCells("static", (col) => palette[(col - 1 + offset) % palette.length]!);
 }
 
 export function rectCells(
