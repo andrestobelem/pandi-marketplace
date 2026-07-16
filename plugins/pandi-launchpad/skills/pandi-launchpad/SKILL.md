@@ -42,7 +42,8 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
   (2x2 por defecto, `colSpan`/`rowSpan` opcionales) y **bloquea** hasta que se aprieta
   un pad de alguna opción, o vence el timeout. `jsonOptions` es un array de
   `{"label":str,"col":1-8,"row":1-8,"color":str,"colSpan"?:n,"rowSpan"?:n}`. Devuelve
-  `{"label":str}` o `{"label":null,"timed_out":true}`.
+  `{"label":str}` o `{"label":null,"timed_out":true}`. Mientras espera, la fila 8 se
+  usa como barra de cuenta regresiva (blanca, se va vaciando de derecha a izquierda).
 - `wait-for-press <timeoutSeconds> ['<jsonPads>']` — bloquea hasta que se aprieta
   cualquier pad (o uno de `jsonPads`, un array de `{"col","row"}`). Devuelve
   `{"col":n,"row":n}` o `{"timed_out":true}`.

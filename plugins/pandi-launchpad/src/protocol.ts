@@ -123,6 +123,20 @@ export function fullGridCells(color: string, mode: Mode = "static"): Cell[] {
   return gridCells(mode, () => color);
 }
 
+/** An 8-pad bar in row 8 (unused by ask/confirm's 2x2 option blocks, which anchor
+ * at rows 1-2) that fills from column 1 proportional to `remainingFraction` -
+ * a visual countdown while polling for a press. */
+export function timerBarCells(remainingFraction: number, color: string = "white"): Cell[] {
+  const clamped = Math.max(0, Math.min(1, remainingFraction));
+  const filled = Math.round(clamped * 8);
+  return Array.from({ length: 8 }, (_, i) => ({
+    col: i + 1,
+    row: 8,
+    color: i < filled ? color : "off",
+    mode: "static",
+  }));
+}
+
 export const RAINBOW_PALETTE = ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "magenta"];
 
 export function rainbowCells(offset: number = 0, palette: readonly string[] = RAINBOW_PALETTE): Cell[] {

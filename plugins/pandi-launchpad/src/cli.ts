@@ -2,7 +2,7 @@
 import { confirmOptions, type Option, optionCells } from "./ask.ts";
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
-import { type Cell, type Mode, fullGridCells, noteToCoord, padNote, progressBarCells } from "./protocol.ts";
+import { type Cell, type Mode, fullGridCells, noteToCoord, padNote, progressBarCells, timerBarCells } from "./protocol.ts";
 
 function unwrap(value: string | undefined): string | undefined {
   if (!value || (value.startsWith("${") && value.endsWith("}"))) return undefined;
@@ -11,15 +11,26 @@ function unwrap(value: string | undefined): string | undefined {
 
 const INPUT_COMMANDS = new Set(["ask", "confirm", "wait-for-press"]);
 
+const COUNTDOWN_TICK_MS = 1000;
+
 async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds: number): Promise<unknown> {
   const { cells, byNote } = optionCells(options);
+  const wantedNotes = new Set(byNote.keys());
+  const totalMs = timeoutSeconds * 1000;
   lp.clear();
   lp.show(cells);
-  let pressedNote: number | null;
+  let pressedNote: number | null = null;
   try {
-    pressedNote = await lp.pollPress(timeoutSeconds * 1000, new Set(byNote.keys()));
+    let elapsedMs = 0;
+    while (elapsedMs < totalMs && pressedNote === null) {
+      lp.show(timerBarCells((totalMs - elapsedMs) / totalMs));
+      const waitMs = Math.min(COUNTDOWN_TICK_MS, totalMs - elapsedMs);
+      pressedNote = await lp.pollPress(waitMs, wantedNotes);
+      elapsedMs += waitMs;
+    }
   } finally {
     lp.show(cells.map((c) => ({ ...c, color: "off" })));
+    lp.show(timerBarCells(0));
   }
   if (pressedNote === null) return { label: null, timed_out: true };
   return { label: byNote.get(pressedNote) ?? null };

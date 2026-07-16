@@ -15,6 +15,7 @@ import {
   rectCells,
   RGB,
   textFrameCells,
+  timerBarCells,
 } from "../src/protocol.ts";
 
 describe("padNote", () => {
@@ -231,6 +232,40 @@ describe("textFrameCells", () => {
     const byCoord = new Map(cells.map((c) => [`${c.col},${c.row}`, c.color]));
     expect(byCoord.get("1,1")).toBe("off");
     expect(byCoord.get("2,1")).toBe("red");
+  });
+});
+
+describe("timerBarCells", () => {
+  it("returns all 8 pads of row 8, cols 1-8", () => {
+    const cells = timerBarCells(1, "white");
+    expect(cells).toHaveLength(8);
+    expect(cells.every((c) => c.row === 8)).toBe(true);
+    expect(new Set(cells.map((c) => c.col))).toEqual(new Set([1, 2, 3, 4, 5, 6, 7, 8]));
+  });
+
+  it("lights all 8 at fraction 1", () => {
+    expect(timerBarCells(1, "white").filter((c) => c.color === "white")).toHaveLength(8);
+  });
+
+  it("lights none at fraction 0", () => {
+    expect(timerBarCells(0, "white").every((c) => c.color === "off")).toBe(true);
+  });
+
+  it("lights proportionally at fraction 0.5", () => {
+    expect(timerBarCells(0.5, "white").filter((c) => c.color === "white")).toHaveLength(4);
+  });
+
+  it("fills from column 1 upward", () => {
+    const byCol = new Map(timerBarCells(0.5, "white").map((c) => [c.col, c.color]));
+    expect(byCol.get(1)).toBe("white");
+    expect(byCol.get(4)).toBe("white");
+    expect(byCol.get(5)).toBe("off");
+    expect(byCol.get(8)).toBe("off");
+  });
+
+  it("clamps out-of-range fractions", () => {
+    expect(timerBarCells(-1, "white")).toEqual(timerBarCells(0, "white"));
+    expect(timerBarCells(2, "white")).toEqual(timerBarCells(1, "white"));
   });
 });
 
