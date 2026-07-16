@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { confirmOptions, countdownColor, type DoneOption, flashCells, multiSelectCells, type Option, optionCells } from "./ask.ts";
+import { confirmOptions, countdownColor, type DoneOption, flashCells, multiSelectCells, type Option, optionCells, resultIcon } from "./ask.ts";
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
 import { iconCells } from "./icons.ts";
@@ -19,6 +19,7 @@ const INPUT_COMMANDS = new Set(["ask", "ask-multi", "confirm", "wait-for-press"]
 
 const COUNTDOWN_TICK_MS = 1000;
 const TIMEOUT_FLASH_MS = 400;
+const ICON_ECHO_MS = 800;
 
 async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds: number): Promise<unknown> {
   const { cells, byNote } = optionCells(options);
@@ -45,7 +46,14 @@ async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds
     lp.show(timerBarCells(0));
   }
   if (pressedNote === null) return { label: null, timed_out: true };
-  return { label: byNote.get(pressedNote) ?? null };
+  const label = byNote.get(pressedNote) ?? null;
+  if (label !== null) {
+    const icon = resultIcon(label, options);
+    lp.show(iconCells(icon.name, icon.color));
+    await sleep(ICON_ECHO_MS);
+    lp.show(fullGridCells("off"));
+  }
+  return { label };
 }
 
 /** Like runAsk, but each press toggles that option's selection (redrawn as
@@ -91,6 +99,11 @@ async function runAskMulti(
     }
     lp.show(fullGridCells("off"));
     lp.show(timerBarCells(0));
+  }
+  if (confirmed) {
+    lp.show(iconCells("check", "green"));
+    await sleep(ICON_ECHO_MS);
+    lp.show(fullGridCells("off"));
   }
   return confirmed ? { labels: [...selected] } : { labels: [...selected], timed_out: true };
 }

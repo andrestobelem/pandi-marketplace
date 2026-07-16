@@ -63,6 +63,15 @@ export function flashCells(cells: readonly Cell[], color: string = "red"): Cell[
   return cells.map((c) => ({ ...c, color, mode: "flash" as Mode }));
 }
 
+/** Icon feedback for a resolved ask/confirm press: green check for an
+ * affirmative (green) option, red x for a negative (red) one, or a check in
+ * the option's own color otherwise - a tactile "it registered" acknowledgement
+ * before the grid turns off. */
+export function resultIcon(label: string, options: readonly Option[]): { name: string; color: string } {
+  const color = options.find((o) => o.label === label)?.color ?? "white";
+  return { name: color === "red" ? "x" : "check", color };
+}
+
 /** Color for the countdown bar: `urgentColor` once `remainingMs` drops to (or
  * below) `urgentMs`, `normalColor` otherwise. */
 export function countdownColor(

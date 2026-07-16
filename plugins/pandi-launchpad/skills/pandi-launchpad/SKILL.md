@@ -57,7 +57,11 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
   usa como barra de cuenta regresiva (se va vaciando de derecha a izquierda); es
   blanca y pasa a roja en los últimos 3 segundos. Si vence el timeout, el bloque de
   opciones parpadea en rojo (~400ms) antes de apagarse, para distinguir "nadie
-  contestó a tiempo" de una pulsación real (que apaga directo, sin parpadeo).
+  contestó a tiempo" de una pulsación real. Si en cambio hay una pulsación real,
+  antes de apagar se muestra un ícono breve (~800ms) de confirmación: check verde
+  para la opción "afirmativa" (color verde, p. ej. el "si" de `confirm`), x roja
+  para la "negativa" (color rojo, p. ej. el "no"), o un check en el color propio de
+  la opción para cualquier otro caso.
 - `wait-for-press <timeoutSeconds> ['<jsonPads>']` — bloquea hasta que se aprieta
   cualquier pad (o uno de `jsonPads`, un array de `{"col","row"}`). Devuelve
   `{"col":n,"row":n}` o `{"timed_out":true}`.
@@ -74,7 +78,8 @@ dark_red, dark_green, dark_blue, magenta`, o (solo con `mode=static`) un hex
   `{"col":1-8,"row":1-8,"color"?:str,"colSpan"?:n,"rowSpan"?:n}`. Devuelve
   `{"labels":[...]}` (o con `"timed_out":true` si vence el timeout con lo
   seleccionado hasta ese momento). Igual que `ask`, si vence el timeout todo el
-  bloque (opciones + "listo") parpadea en rojo antes de apagarse.
+  bloque (opciones + "listo") parpadea en rojo antes de apagarse; si en cambio se
+  confirma con el pad de "listo", se muestra un check verde breve antes de apagar.
 
 **Importante:** como el dispositivo no tiene pantalla, decí el prompt/opciones en tu
 propia respuesta de texto (antes de correr el comando) para que la persona sepa qué

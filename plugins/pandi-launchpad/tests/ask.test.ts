@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { confirmOptions, countdownColor, DEFAULT_DONE_OPTION, flashCells, multiSelectCells, optionCells } from "../src/ask.ts";
+import { confirmOptions, countdownColor, DEFAULT_DONE_OPTION, flashCells, multiSelectCells, optionCells, resultIcon } from "../src/ask.ts";
 
 describe("optionCells", () => {
   it("builds one cell per pad in each option's block, keyed by pad note", () => {
@@ -128,6 +128,25 @@ describe("flashCells", () => {
 
   it("returns an empty array for an empty input", () => {
     expect(flashCells([])).toEqual([]);
+  });
+});
+
+describe("resultIcon", () => {
+  it("uses a green check for the green (affirmative) option, e.g. confirm's 'si'", () => {
+    expect(resultIcon("si", confirmOptions())).toEqual({ name: "check", color: "green" });
+  });
+
+  it("uses a red x for the red (negative) option, e.g. confirm's 'no'", () => {
+    expect(resultIcon("no", confirmOptions())).toEqual({ name: "x", color: "red" });
+  });
+
+  it("uses a check in the option's own color for any other color", () => {
+    const options = [{ label: "azul", col: 1, row: 1, color: "blue" }];
+    expect(resultIcon("azul", options)).toEqual({ name: "check", color: "blue" });
+  });
+
+  it("falls back to a white check when the label isn't found among the options", () => {
+    expect(resultIcon("missing", [])).toEqual({ name: "check", color: "white" });
   });
 });
 
