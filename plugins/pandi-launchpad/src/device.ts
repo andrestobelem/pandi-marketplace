@@ -107,7 +107,7 @@ export class LaunchpadX {
     }
   }
 
-  async scrollText(text: string, color: string = "white", speedMs: number = 120): Promise<void> {
+  async scrollText(text: string, color: string = "white", speedMs: number = 180): Promise<void> {
     parseColor(color); // fail before animating rather than partway through it
     const columns = textColumns(text);
     for (let offset = -8; offset <= columns.length; offset++) {

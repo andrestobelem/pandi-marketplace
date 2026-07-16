@@ -103,13 +103,13 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
     }
     case "scroll-text": {
       const [text, color, speedMs] = args;
-      await lp.scrollText(text ?? "", color ?? "white", speedMs ? Number(speedMs) : 120);
+      await lp.scrollText(text ?? "", color ?? "white", speedMs ? Number(speedMs) : 180);
       return { result: `scrolled ${JSON.stringify(text ?? "")} (${color ?? "white"})` };
     }
     case "notify-text": {
       const [message, kind] = args;
       const { color } = resolveEvent(kind ?? "done");
-      await lp.scrollText(message ?? "", color, 120);
+      await lp.scrollText(message ?? "", color, 180);
       return { result: `notified-text ${JSON.stringify(message ?? "")} (${color})` };
     }
     case "ask": {
