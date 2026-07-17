@@ -21,6 +21,21 @@ const COUNTDOWN_TICK_MS = 1000;
 const TIMEOUT_FLASH_MS = 400;
 const ICON_ECHO_MS = 800;
 
+/** Shared timeout feedback for runAsk/runAskMulti: flash `cells` red briefly
+ * before the caller turns the grid off. */
+async function flashTimeout(lp: LaunchpadX, cells: readonly Cell[]): Promise<void> {
+  lp.show(flashCells(cells));
+  await sleep(TIMEOUT_FLASH_MS);
+}
+
+/** Shared success feedback for runAsk/runAskMulti: show an icon briefly, then
+ * clear the grid. */
+async function echoIcon(lp: LaunchpadX, name: string, color: string): Promise<void> {
+  lp.show(iconCells(name, color));
+  await sleep(ICON_ECHO_MS);
+  lp.show(fullGridCells("off"));
+}
+
 async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds: number): Promise<unknown> {
   const { cells, byNote } = optionCells(options);
   const wantedNotes = new Set(byNote.keys());
@@ -38,10 +53,7 @@ async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds
       elapsedMs += waitMs;
     }
   } finally {
-    if (pressedNote === null) {
-      lp.show(flashCells(cells));
-      await sleep(TIMEOUT_FLASH_MS);
-    }
+    if (pressedNote === null) await flashTimeout(lp, cells);
     lp.show(cells.map((c) => ({ ...c, color: "off" })));
     lp.show(timerBarCells(0));
   }
@@ -49,9 +61,7 @@ async function runAsk(lp: LaunchpadX, options: readonly Option[], timeoutSeconds
   const label = byNote.get(pressedNote) ?? null;
   if (label !== null) {
     const icon = resultIcon(label, options);
-    lp.show(iconCells(icon.name, icon.color));
-    await sleep(ICON_ECHO_MS);
-    lp.show(fullGridCells("off"));
+    await echoIcon(lp, icon.name, icon.color);
   }
   return { label };
 }
@@ -93,18 +103,11 @@ async function runAskMulti(
       redraw();
     }
   } finally {
-    if (!confirmed) {
-      lp.show(flashCells(multiSelectCells(options, selected, doneOption).cells));
-      await sleep(TIMEOUT_FLASH_MS);
-    }
+    if (!confirmed) await flashTimeout(lp, multiSelectCells(options, selected, doneOption).cells);
     lp.show(fullGridCells("off"));
     lp.show(timerBarCells(0));
   }
-  if (confirmed) {
-    lp.show(iconCells("check", "green"));
-    await sleep(ICON_ECHO_MS);
-    lp.show(fullGridCells("off"));
-  }
+  if (confirmed) await echoIcon(lp, "check", "green");
   return confirmed ? { labels: [...selected] } : { labels: [...selected], timed_out: true };
 }
 
