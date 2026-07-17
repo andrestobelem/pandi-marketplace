@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyMenuNote, DEFAULT_EXIT_ITEM, DEFAULT_MENU_ITEMS, menuCells } from "../src/menu.ts";
+import { classifyMenuNote, DEFAULT_EXIT_ITEM, DEFAULT_MENU_ITEMS, menuCells, resolveMenuConfig } from "../src/menu.ts";
 
 describe("menuCells", () => {
   const items = [{ label: "seguir", text: "seguí con lo que estabas haciendo", col: 1, row: 1, color: "green" }];
@@ -119,5 +119,31 @@ describe("classifyMenuNote", () => {
 
   it("classifies any other pad as 'unhandled'", () => {
     expect(classifyMenuNote(55, byNote, exitNotes)).toBe("unhandled");
+  });
+});
+
+describe("resolveMenuConfig", () => {
+  it("defaults both items and exitItem when no config is given", () => {
+    expect(resolveMenuConfig(undefined)).toEqual({ items: DEFAULT_MENU_ITEMS, exitItem: DEFAULT_EXIT_ITEM });
+  });
+
+  it("uses the config's items when given, defaulting exitItem", () => {
+    const items = [{ label: "a", text: "a", col: 1, row: 1, color: "green" }];
+    expect(resolveMenuConfig({ items })).toEqual({ items, exitItem: DEFAULT_EXIT_ITEM });
+  });
+
+  it("uses the config's exitItem when given, defaulting items", () => {
+    const exitItem = { col: 3, row: 3, color: "gray" };
+    expect(resolveMenuConfig({ exitItem })).toEqual({ items: DEFAULT_MENU_ITEMS, exitItem });
+  });
+
+  it("falls back to default items when the config's items array is empty", () => {
+    expect(resolveMenuConfig({ items: [] })).toEqual({ items: DEFAULT_MENU_ITEMS, exitItem: DEFAULT_EXIT_ITEM });
+  });
+
+  it("uses both when both are given", () => {
+    const items = [{ label: "a", text: "a", col: 1, row: 1, color: "green" }];
+    const exitItem = { col: 3, row: 3, color: "gray" };
+    expect(resolveMenuConfig({ items, exitItem })).toEqual({ items, exitItem });
   });
 });

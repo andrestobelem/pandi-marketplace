@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { confirmOptions, countdownColor, type DoneOption, flashCells, multiSelectCells, type Option, optionCells, resultIcon } from "./ask.ts";
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
 import { iconCells } from "./icons.ts";
-import { classifyMenuNote, DEFAULT_EXIT_ITEM, DEFAULT_MENU_ITEMS, type ExitItem, type MenuItem, menuCells } from "./menu.ts";
+import { classifyMenuNote, type ExitItem, type MenuConfig, type MenuItem, menuCells, resolveMenuConfig } from "./menu.ts";
 import { type Cell, type Mode, fullGridCells, noteToCoord, padNote, progressBarCells, timerBarCells } from "./protocol.ts";
 import { riskyCommandReason } from "./risky-command.ts";
 
@@ -115,6 +118,18 @@ async function runAskMulti(
 
 const MENU_POLL_MS = 24 * 60 * 60 * 1000; // re-poll once a day; menu otherwise waits forever for a press
 const MENU_UNHANDLED_FLASH_MS = 300;
+const MENU_CONFIG_PATH = process.env.PANDI_LAUNCHPAD_MENU_CONFIG || join(homedir(), ".config", "pandi-launchpad", "menu.json");
+
+/** Reads `menu`'s items/exit block from `MENU_CONFIG_PATH` so they can be
+ * customized without editing src/menu.ts - missing file or invalid JSON just
+ * means "no config", not an error (resolveMenuConfig falls back to defaults). */
+function loadMenuConfig(): MenuConfig | undefined {
+  try {
+    return JSON.parse(readFileSync(MENU_CONFIG_PATH, "utf8")) as MenuConfig;
+  } catch {
+    return undefined;
+  }
+}
 
 /** Copies `text` to the macOS clipboard via `pbcopy`, so a canned phrase picked
  * on the Launchpad can be pasted straight into a Claude Code prompt. */
@@ -374,8 +389,10 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
     }
     case "menu": {
       const [itemsJson, exitItemJson] = args;
-      const items = itemsJson ? (JSON.parse(itemsJson) as MenuItem[]) : DEFAULT_MENU_ITEMS;
-      const exitItem = exitItemJson ? (JSON.parse(exitItemJson) as ExitItem) : DEFAULT_EXIT_ITEM;
+      const config: MenuConfig | undefined = itemsJson
+        ? { items: JSON.parse(itemsJson) as MenuItem[], exitItem: exitItemJson ? (JSON.parse(exitItemJson) as ExitItem) : undefined }
+        : loadMenuConfig();
+      const { items, exitItem } = resolveMenuConfig(config);
       return runMenu(lp, items, exitItem);
     }
     default:

@@ -46,6 +46,14 @@ copia). Cualquier otro pad (no uno de los ítems ni el de salida) también reacc
 — tira un flash blanco breve, sin copiar nada — para que ningún press quede sin
 respuesta mientras el menú está arriba.
 
+Para customizar las frases sin tocar código ni pasar JSON a mano cada vez, se puede
+crear `~/.config/pandi-launchpad/menu.json` (o la ruta que indique la env var
+`PANDI_LAUNCHPAD_MENU_CONFIG`) con `{"items": [...], "exitItem": {...}}` — ambos
+campos opcionales, mismo formato que `jsonItems`/`jsonExitItem`; lo que falte usa el
+default. Si el archivo no existe o no parsea, se ignora silenciosamente y se usan
+los defaults. Los args de línea de comandos (`jsonItems`/`jsonExitItem`), si se
+pasan, tienen prioridad sobre el archivo de config.
+
 ## Notificaciones automáticas (hooks)
 
 `Stop` → texto "Listo" scrolleando en verde, `Notification` → "Atencion" scrolleando

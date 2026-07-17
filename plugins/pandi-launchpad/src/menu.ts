@@ -43,6 +43,20 @@ export function menuCells(
   return { cells, byNote, exitNotes };
 }
 
+export type MenuConfig = { items?: MenuItem[]; exitItem?: ExitItem };
+
+/** Fills in defaults for whatever a user-supplied menu config leaves out, so
+ * `~/.config/pandi-launchpad/menu.json` can override just the items, just the
+ * exit block, or neither, without repeating the other. An empty `items` array
+ * (a config that defines no items at all) falls back to the defaults too -
+ * an empty menu isn't a useful override. */
+export function resolveMenuConfig(config?: MenuConfig): { items: MenuItem[]; exitItem: ExitItem } {
+  return {
+    items: config?.items && config.items.length > 0 ? config.items : DEFAULT_MENU_ITEMS,
+    exitItem: config?.exitItem ?? DEFAULT_EXIT_ITEM,
+  };
+}
+
 /** What a pressed pad means to the standing menu: pick an item, close the
  * menu, or (any other pad, so every press gets acknowledged even off the
  * defined layout) "unhandled". */
