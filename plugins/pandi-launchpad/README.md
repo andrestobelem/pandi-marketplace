@@ -65,12 +65,17 @@ explícitamente (queda pulsando hasta el próximo evento que reescriba el grid);
 corren varios subagentes seguidos el pulso simplemente se refresca en el mismo color.
 
 `PreToolUse` (matcher `Bash`) → `node cli.ts safety-gate`, que lee el payload del hook
-por stdin y decide vía `src/risky-command.ts` si el comando es riesgoso (force-push,
-`reset --hard`, `rm -rf`, etc.). Si no lo es, o no hay Launchpad conectado, devuelve
-`permissionDecision: "ask"` sin abrir el dispositivo (no agrega latencia a los demás
-comandos de Bash). Si lo es, bloquea con `confirm` hasta que se aprieta un pad —
-sin respuesta a tiempo cuenta como bloqueo, a diferencia de los hooks de notificación
-que nunca bloquean el evento real.
+por stdin. Si no hay Launchpad conectado (o el payload no se puede parsear), devuelve
+`permissionDecision: "ask"` sin abrir el dispositivo (cae al prompt normal de
+permisos, por teclado). Si hay Launchpad, bloquea con `confirm` para **cualquier**
+comando de Bash — no solo los riesgosos — hasta que se aprieta un pad o vence el
+timeout de 30s: contestar el permiso nunca necesita el teclado si el dispositivo
+está conectado. `src/risky-command.ts` sigue identificando patrones riesgosos
+(force-push, `reset --hard`, `rm -rf`, etc.) solo para el mensaje mostrado y para
+decidir qué pasa si nadie contesta a tiempo: un comando riesgoso sin respuesta
+cuenta como bloqueo (fail-closed); uno no riesgoso cae al prompt normal en vez de
+bloquearse. A diferencia de los hooks de notificación, que nunca bloquean el
+evento real, `safety-gate` sí puede bloquear la ejecución del comando.
 
 ## Detección de puerto
 

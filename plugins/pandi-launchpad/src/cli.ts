@@ -186,10 +186,12 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString("utf8");
 }
 
-/** PreToolUse hook: gates risky Bash commands (force-push, reset --hard, rm
- * -rf, ...) behind a physical confirm press. Never opens the device for the
- * common case (non-risky command, or no device connected) so it stays out
- * of the way of every other Bash call. */
+/** PreToolUse hook: gates every Bash permission decision behind a physical
+ * confirm press, not just risky commands (force-push, reset --hard, rm -rf,
+ * ...) - so answering "sí"/"no" to run a command never needs the keyboard.
+ * Falls back to the normal permission prompt when there's no device (or a
+ * malformed hook payload); a risky command that times out fails closed
+ * (deny), a non-risky one falls back to the normal prompt instead. */
 async function runSafetyGate(): Promise<unknown> {
   let input: { tool_name?: string; tool_input?: { command?: string } };
   try {
@@ -199,7 +201,8 @@ async function runSafetyGate(): Promise<unknown> {
   }
   if (input.tool_name !== "Bash") return hookDecision("ask");
   const reason = riskyCommandReason(input.tool_input?.command ?? "");
-  if (!reason) return hookDecision("ask");
+  const isRisky = reason !== null;
+  const label = reason ?? "comando de Bash";
 
   let lp: LaunchpadX;
   try {
@@ -212,9 +215,15 @@ async function runSafetyGate(): Promise<unknown> {
     return hookDecision("ask"); // no Launchpad connected: fall back to the normal permission prompt
   }
   try {
-    const { label } = (await runAsk(lp, confirmOptions("permitir", "bloquear"), 30)) as { label: string | null };
-    if (label === "permitir") return hookDecision("allow", `Confirmado en el Launchpad (motivo: ${reason}).`);
-    return hookDecision("deny", `Bloqueado en el Launchpad (motivo: ${reason}, sin respuesta a tiempo cuenta como bloqueo).`);
+    const { label: pressed } = (await runAsk(lp, confirmOptions("permitir", "bloquear"), 30)) as { label: string | null };
+    if (pressed === "permitir") return hookDecision("allow", `Confirmado en el Launchpad (motivo: ${label}).`);
+    if (pressed === "bloquear") return hookDecision("deny", `Bloqueado en el Launchpad (motivo: ${label}).`);
+    // Timed out with nobody pressing anything: fail closed for a genuinely
+    // risky command, but fall back to the normal prompt for everything else -
+    // an unanswered "should this ls run" shouldn't hard-block like an
+    // unanswered "should this rm -rf run" does.
+    if (isRisky) return hookDecision("deny", `Bloqueado en el Launchpad (motivo: ${label}, sin respuesta a tiempo cuenta como bloqueo).`);
+    return hookDecision("ask");
   } catch {
     // Mid-flow MIDI error (device disconnected after opening, etc.): fail safe
     // to the normal permission prompt - never silently allow a risky command.

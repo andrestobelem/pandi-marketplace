@@ -90,13 +90,19 @@ tiene N segundos para apretar.
 
 `safety-gate` no se invoca a mano: lo corre automáticamente el hook `PreToolUse`
 (`hooks/hooks.json`) antes de cada llamada a la tool `Bash`. Lee el payload del hook
-por stdin; si el comando no es riesgoso (o no hay Launchpad conectado), no abre el
-dispositivo y devuelve `permissionDecision: "ask"` (sigue el flujo normal de permisos).
-Si el comando matchea un patrón riesgoso (`git push --force`, `git reset --hard`,
+por stdin; si no hay Launchpad conectado (o el payload no se puede parsear), no abre
+el dispositivo y devuelve `permissionDecision: "ask"` (sigue el flujo normal de
+permisos, con teclado). Si el Launchpad está conectado, prende el bloque verde
+("permitir") / rojo ("bloquear") de `confirm` para **cualquier** comando de Bash — no
+solo los riesgosos — y bloquea hasta que se aprieta un pad o vence el timeout de 30s:
+así, contestar "sí"/"no" para correr un comando nunca necesita el teclado. `reason`
+identifica el patrón si matchea uno riesgoso (`git push --force`, `git reset --hard`,
 `git clean -f`, `git branch -D`, `git checkout`/`restore` que descartan cambios,
-`rm -rf`, ver `src/risky-command.ts`), prende el bloque verde ("permitir") / rojo
-("bloquear") de `confirm` y bloquea hasta que se aprieta un pad o vence el timeout de
-30s — sin respuesta a tiempo cuenta como bloqueo (fail-closed).
+`rm -rf`, ver `src/risky-command.ts`); si no matchea ninguno, el motivo mostrado es
+genérico ("comando de Bash"). El timeout se comporta distinto según el riesgo: un
+comando riesgoso sin respuesta a tiempo cuenta como bloqueo (fail-closed); uno no
+riesgoso sin respuesta cae al prompt normal de permisos en vez de bloquearse (no
+tiene sentido fail-closed para algo como `ls`).
 
 ## Comando standalone (no lo invoques vos)
 
