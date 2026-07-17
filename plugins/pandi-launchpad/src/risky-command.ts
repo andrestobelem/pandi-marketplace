@@ -41,10 +41,7 @@ function checkoutIsDiscarding(command: string): boolean {
 
 function rmIsRecursiveForce(command: string): boolean {
   if (!/\brm\b/i.test(command)) return false;
-  const tokens = flagTokens(command);
-  const isRecursive = tokens.some((t) => t === "--recursive" || (!t.startsWith("--") && t.includes("r")));
-  const isForce = tokens.some((t) => t === "--force" || (!t.startsWith("--") && t.includes("f")));
-  return isRecursive && isForce;
+  return hasShortOrLongFlag(command, "r", "--recursive") && hasShortOrLongFlag(command, "f", "--force");
 }
 
 const RISKY_RULES: { reason: string; test: (command: string) => boolean }[] = [
