@@ -1,5 +1,7 @@
 // Destructive/hard-to-reverse shell commands worth gating behind a physical
-// confirm, mirroring the "risky actions" list from the repo's own CLAUDE.md.
+// confirm, mirroring the "risky actions" examples from Claude Code's own
+// system prompt ("Executing actions with care" section: force-push, reset
+// --hard, rm -rf, etc).
 
 function flagTokens(command: string): string[] {
   return command.split(/\s+/).filter((t) => t.startsWith("-"));
