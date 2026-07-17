@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "menu": "node src/cli.ts menu"
   },
   "dependencies": {
     "@julusian/midi": "^3.4.0"

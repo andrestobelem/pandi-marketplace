@@ -1,8 +1,10 @@
 #!/usr/bin/env node
+import { spawn } from "node:child_process";
 import { confirmOptions, countdownColor, type DoneOption, flashCells, multiSelectCells, type Option, optionCells, resultIcon } from "./ask.ts";
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
 import { iconCells } from "./icons.ts";
+import { DEFAULT_EXIT_ITEM, DEFAULT_MENU_ITEMS, type ExitItem, type MenuItem, menuCells } from "./menu.ts";
 import { type Cell, type Mode, fullGridCells, noteToCoord, padNote, progressBarCells, timerBarCells } from "./protocol.ts";
 import { riskyCommandReason } from "./risky-command.ts";
 
@@ -15,7 +17,7 @@ function unwrap(value: string | undefined): string | undefined {
   return value;
 }
 
-const INPUT_COMMANDS = new Set(["ask", "ask-multi", "confirm", "wait-for-press"]);
+const INPUT_COMMANDS = new Set(["ask", "ask-multi", "confirm", "wait-for-press", "menu"]);
 
 const COUNTDOWN_TICK_MS = 1000;
 const TIMEOUT_FLASH_MS = 400;
@@ -111,6 +113,45 @@ async function runAskMulti(
   return confirmed ? { labels: [...selected] } : { labels: [...selected], timed_out: true };
 }
 
+const MENU_POLL_MS = 24 * 60 * 60 * 1000; // re-poll once a day; menu otherwise waits forever for a press
+
+/** Copies `text` to the macOS clipboard via `pbcopy`, so a canned phrase picked
+ * on the Launchpad can be pasted straight into a Claude Code prompt. */
+function copyToClipboard(text: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const pbcopy = spawn("pbcopy");
+    pbcopy.once("error", reject);
+    pbcopy.once("close", (code) => (code === 0 ? resolve() : reject(new Error(`pbcopy exited with code ${code}`))));
+    pbcopy.stdin.end(text);
+  });
+}
+
+/** Standalone loop (not driven by Claude): each item press copies its `text`
+ * to the clipboard and keeps the menu up for the next pick, so starting or
+ * continuing a conversation needs a paste instead of typing. Runs until the
+ * exit block is pressed or the process is interrupted (Ctrl+C). */
+async function runMenu(lp: LaunchpadX, items: readonly MenuItem[], exitItem: ExitItem): Promise<unknown> {
+  const { cells, byNote, exitNotes } = menuCells(items, exitItem);
+  const wantedNotes = new Set([...byNote.keys(), ...exitNotes]);
+  lp.clear();
+  lp.show(cells);
+  let copied = 0;
+  for (;;) {
+    const note = await lp.pollPress(MENU_POLL_MS, wantedNotes);
+    if (note === null) continue;
+    if (exitNotes.has(note)) break;
+    const label = byNote.get(note);
+    const item = items.find((i) => i.label === label);
+    if (!item) continue;
+    await copyToClipboard(item.text);
+    copied++;
+    await echoIcon(lp, "check", item.color);
+    lp.show(cells);
+  }
+  lp.show(fullGridCells("off"));
+  return { result: "menu closed", copied };
+}
+
 type PermissionDecision = "allow" | "deny" | "ask";
 
 function hookDecision(decision: PermissionDecision, reason?: string): unknown {
@@ -180,6 +221,16 @@ async function main(): Promise<void> {
     inputName: unwrap(process.env.LAUNCHPAD_INPUT_PORT),
     openInput,
   });
+
+  if (command === "menu") {
+    // The loop otherwise runs until the exit pad is pressed; Ctrl+C should
+    // still turn the grid off instead of leaving it lit when node exits.
+    process.once("SIGINT", () => {
+      lp.show(fullGridCells("off"));
+      lp.close();
+      process.exit(0);
+    });
+  }
 
   try {
     const result = await dispatch(lp, command, args);
@@ -295,6 +346,12 @@ async function dispatch(lp: LaunchpadX, command: string | undefined, args: strin
       const note = await lp.pollPress(Number(timeoutSeconds) * 1000, wanted);
       if (note === null) return { timed_out: true };
       return noteToCoord(note);
+    }
+    case "menu": {
+      const [itemsJson, exitItemJson] = args;
+      const items = itemsJson ? (JSON.parse(itemsJson) as MenuItem[]) : DEFAULT_MENU_ITEMS;
+      const exitItem = exitItemJson ? (JSON.parse(exitItemJson) as ExitItem) : DEFAULT_EXIT_ITEM;
+      return runMenu(lp, items, exitItem);
     }
     default:
       throw new Error(`Unknown command: ${command}`);

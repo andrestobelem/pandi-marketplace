@@ -22,6 +22,28 @@ JSON de entrada/salida: `set`, `show`, `clear`, `pulse-all`, `progress-bar`, `sw
 (usados por los hooks `Stop`/`Notification`), y `safety-gate`/`pulse-all`/`clear`
 (usados por los hooks `PreToolUse`/`PreCompact`/`PostCompact`, no se invocan a mano).
 
+## `menu`: arrancar o seguir una conversación sin teclear
+
+A diferencia de todo lo anterior (que corre Claude vía el skill), `menu` es para
+que lo corras vos mismo, standalone, en una terminal aparte:
+
+```bash
+npm run menu
+# o: node src/cli.ts menu ['<jsonItems>'] ['<jsonExitItem>']
+```
+
+Prende un set de frases predefinidas (`src/menu.ts`, `DEFAULT_MENU_ITEMS`) como
+bloques 2x2 y queda en loop: cada pad que apretás copia su frase al portapapeles
+(`pbcopy`, así que es **solo macOS**) y el menú se vuelve a mostrar para el
+próximo pick — pegás con Cmd+V (y Enter) en la terminal donde tenés (o vas a
+abrir) la sesión de Claude Code, sin escribir nada. Sirve igual para arrancar
+una conversación nueva que para contestar/seguir una que ya está corriendo.
+El bloque gris `flash` arriba a la derecha (`DEFAULT_EXIT_ITEM`) cierra el loop;
+Ctrl+C también apaga el grid antes de salir. `jsonItems`/`jsonExitItem` opcionales
+reemplazan el set de frases/la posición del botón de salir por los tuyos
+(mismo formato que `ask`'s `jsonOptions`, más un campo `text` con la frase que se
+copia).
+
 ## Notificaciones automáticas (hooks)
 
 `Stop` → texto "Listo" scrolleando en verde, `Notification` → "Atencion" scrolleando
@@ -58,11 +80,13 @@ o similar) en `LAUNCHPAD_OUTPUT_PORT` / `LAUNCHPAD_INPUT_PORT`.
 
 El protocolo (mapeo de pads, colores, mensajes SysEx) vive en `src/protocol.ts`; la
 fuente de texto (`src/font.ts`, 5x7), los íconos fijos 8x8 (`src/icons.ts`), la lógica
-de opciones de `ask`/`confirm` (`src/ask.ts`) y el matcher de comandos riesgosos
-(`src/risky-command.ts`) son módulos puros separados, todos con tests unitarios
-(vitest) en `tests/`. Se verificó en vivo contra un Launchpad X real: pad individual,
-las animaciones/patterns, texto scrolleando, `ask`/`confirm`, `wait-for-press`, y los
-dos hooks de notificación.
+de opciones de `ask`/`confirm` (`src/ask.ts`), el layout de `menu` (`src/menu.ts`) y
+el matcher de comandos riesgosos (`src/risky-command.ts`) son módulos puros separados,
+todos con tests unitarios (vitest) en `tests/`. Se verificó en vivo contra un
+Launchpad X real: pad individual, las animaciones/patterns, texto scrolleando,
+`ask`/`confirm`, `wait-for-press`, `menu` (los 6 bloques de color, el bloque gris
+de salida parpadeando, el check de feedback por color tras cada press, y el copiado
+a `pbcopy`), y los dos hooks de notificación.
 
 `safety-gate`/`PreToolUse` **no** se pudo verificar en vivo de forma totalmente
 confiable: el Launchpad X usado para probar resolvió `confirm` solo, sin que nadie lo

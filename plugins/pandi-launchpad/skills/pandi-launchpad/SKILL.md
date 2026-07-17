@@ -98,6 +98,13 @@ Si el comando matchea un patrón riesgoso (`git push --force`, `git reset --hard
 ("bloquear") de `confirm` y bloquea hasta que se aprieta un pad o vence el timeout de
 30s — sin respuesta a tiempo cuenta como bloqueo (fail-closed).
 
+## Comando standalone (no lo invoques vos)
+
+`menu` es un loop que la persona corre por su cuenta en otra terminal (`npm run
+menu`), no algo que vos debas invocar: queda esperando presses indefinidamente hasta
+que se aprieta el pad de salir o Ctrl+C, así que llamarlo por Bash colgaría la
+herramienta. Ver el README para el detalle.
+
 ## Requisitos
 
 Un Launchpad X conectado por USB antes de invocar cualquier comando. Si no detecta el
