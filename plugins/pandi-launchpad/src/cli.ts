@@ -158,6 +158,10 @@ async function runSafetyGate(): Promise<unknown> {
     const { label } = (await runAsk(lp, confirmOptions("permitir", "bloquear"), 30)) as { label: string | null };
     if (label === "permitir") return hookDecision("allow", `Confirmado en el Launchpad (motivo: ${reason}).`);
     return hookDecision("deny", `Bloqueado en el Launchpad (motivo: ${reason}, sin respuesta a tiempo cuenta como bloqueo).`);
+  } catch {
+    // Mid-flow MIDI error (device disconnected after opening, etc.): fail safe
+    // to the normal permission prompt - never silently allow a risky command.
+    return hookDecision("ask");
   } finally {
     lp.close();
   }
