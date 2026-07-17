@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_EXIT_ITEM, DEFAULT_MENU_ITEMS, menuCells } from "../src/menu.ts";
+import { classifyMenuNote, DEFAULT_EXIT_ITEM, DEFAULT_MENU_ITEMS, menuCells } from "../src/menu.ts";
 
 describe("menuCells", () => {
   const items = [{ label: "seguir", text: "seguí con lo que estabas haciendo", col: 1, row: 1, color: "green" }];
@@ -101,5 +101,23 @@ describe("DEFAULT_MENU_ITEMS", () => {
       expect(item.label.length).toBeGreaterThan(0);
       expect(item.text.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("classifyMenuNote", () => {
+  const items = [{ label: "seguir", text: "seguí", col: 1, row: 1, color: "green" }];
+  const { byNote, exitNotes } = menuCells(items);
+
+  it("classifies an item's pad as 'item'", () => {
+    expect(classifyMenuNote(11, byNote, exitNotes)).toBe("item");
+  });
+
+  it("classifies the exit block's pad as 'exit'", () => {
+    const [exitNote] = exitNotes;
+    expect(classifyMenuNote(exitNote!, byNote, exitNotes)).toBe("exit");
+  });
+
+  it("classifies any other pad as 'unhandled'", () => {
+    expect(classifyMenuNote(55, byNote, exitNotes)).toBe("unhandled");
   });
 });

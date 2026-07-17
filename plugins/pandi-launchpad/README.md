@@ -42,7 +42,9 @@ El bloque gris `flash` arriba a la derecha (`DEFAULT_EXIT_ITEM`) cierra el loop;
 Ctrl+C también apaga el grid antes de salir. `jsonItems`/`jsonExitItem` opcionales
 reemplazan el set de frases/la posición del botón de salir por los tuyos
 (mismo formato que `ask`'s `jsonOptions`, más un campo `text` con la frase que se
-copia).
+copia). Cualquier otro pad (no uno de los ítems ni el de salida) también reacciona
+— tira un flash blanco breve, sin copiar nada — para que ningún press quede sin
+respuesta mientras el menú está arriba.
 
 ## Notificaciones automáticas (hooks)
 

@@ -42,3 +42,16 @@ export function menuCells(
   }
   return { cells, byNote, exitNotes };
 }
+
+/** What a pressed pad means to the standing menu: pick an item, close the
+ * menu, or (any other pad, so every press gets acknowledged even off the
+ * defined layout) "unhandled". */
+export function classifyMenuNote(
+  note: number,
+  byNote: ReadonlyMap<number, string>,
+  exitNotes: ReadonlySet<number>,
+): "item" | "exit" | "unhandled" {
+  if (exitNotes.has(note)) return "exit";
+  if (byNote.has(note)) return "item";
+  return "unhandled";
+}

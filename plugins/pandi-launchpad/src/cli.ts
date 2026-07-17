@@ -4,7 +4,7 @@ import { confirmOptions, countdownColor, type DoneOption, flashCells, multiSelec
 import { LaunchpadX } from "./device.ts";
 import { resolveEvent } from "./hooks.ts";
 import { iconCells } from "./icons.ts";
-import { DEFAULT_EXIT_ITEM, DEFAULT_MENU_ITEMS, type ExitItem, type MenuItem, menuCells } from "./menu.ts";
+import { classifyMenuNote, DEFAULT_EXIT_ITEM, DEFAULT_MENU_ITEMS, type ExitItem, type MenuItem, menuCells } from "./menu.ts";
 import { type Cell, type Mode, fullGridCells, noteToCoord, padNote, progressBarCells, timerBarCells } from "./protocol.ts";
 import { riskyCommandReason } from "./risky-command.ts";
 
@@ -114,6 +114,7 @@ async function runAskMulti(
 }
 
 const MENU_POLL_MS = 24 * 60 * 60 * 1000; // re-poll once a day; menu otherwise waits forever for a press
+const MENU_UNHANDLED_FLASH_MS = 300;
 
 /** Copies `text` to the macOS clipboard via `pbcopy`, so a canned phrase picked
  * on the Launchpad can be pasted straight into a Claude Code prompt. */
@@ -126,20 +127,35 @@ function copyToClipboard(text: string): Promise<void> {
   });
 }
 
+/** Brief white flash on a single pad - acknowledges a press that isn't a menu
+ * item or the exit block, so every press does *something* instead of nothing. */
+async function flashPad(lp: LaunchpadX, col: number, row: number): Promise<void> {
+  lp.show([{ col, row, color: "white", mode: "flash" }]);
+  await sleep(MENU_UNHANDLED_FLASH_MS);
+  lp.show([{ col, row, color: "off", mode: "static" }]);
+}
+
 /** Standalone loop (not driven by Claude): each item press copies its `text`
  * to the clipboard and keeps the menu up for the next pick, so starting or
- * continuing a conversation needs a paste instead of typing. Runs until the
- * exit block is pressed or the process is interrupted (Ctrl+C). */
+ * continuing a conversation needs a paste instead of typing. Listens for any
+ * pad (not just the defined items/exit) so a stray press always gets some
+ * feedback instead of doing nothing. Runs until the exit block is pressed or
+ * the process is interrupted (Ctrl+C). */
 async function runMenu(lp: LaunchpadX, items: readonly MenuItem[], exitItem: ExitItem): Promise<unknown> {
   const { cells, byNote, exitNotes } = menuCells(items, exitItem);
-  const wantedNotes = new Set([...byNote.keys(), ...exitNotes]);
   lp.clear();
   lp.show(cells);
   let copied = 0;
   for (;;) {
-    const note = await lp.pollPress(MENU_POLL_MS, wantedNotes);
+    const note = await lp.pollPress(MENU_POLL_MS);
     if (note === null) continue;
-    if (exitNotes.has(note)) break;
+    const kind = classifyMenuNote(note, byNote, exitNotes);
+    if (kind === "exit") break;
+    if (kind === "unhandled") {
+      const { col, row } = noteToCoord(note);
+      await flashPad(lp, col, row);
+      continue;
+    }
     const label = byNote.get(note);
     const item = items.find((i) => i.label === label);
     if (!item) continue;
